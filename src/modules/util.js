@@ -1,3 +1,6 @@
+const Tile = require('./tile.js');
+const conf = require('./conf.js');
+
 const Util = {
     randomInt: function (min, max) {
         return ((Math.random() * (max - min)) + min) | 0;
@@ -65,6 +68,9 @@ const Util = {
         }
         return halls;
     },
+    getPoint: function (pt, ang, len) {
+        return { x: pt.x + (len * Math.cos(ang)), y: pt.y + (len * Math.sin(ang)) };
+    },
 
     initArray: function (width, height, value) {
         let arr = [];
@@ -75,6 +81,27 @@ const Util = {
             }
         }
         return arr;
+    },
+    distance: function (x1, y1, x2, y2) {
+        return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+    },
+    raycasting: function (pos, angle, limit, map) {
+        let realPos = { x: pos.x  + (conf.TILE_SIZE / 2), y: pos.y  + (conf.TILE_SIZE / 2) };
+        
+        let light = 0;
+        for (let i = 0; i < limit; i += 5) {
+            let pt = this.getPoint(realPos, angle, i);
+            let x = Math.floor(pt.x / conf.TILE_SIZE);
+            let y = Math.floor(pt.y / conf.TILE_SIZE);
+            light = 1 - i / limit;
+            if (!map.canSeeThrough(x, y)) {
+                map.view(x, y, light);
+                map.see(x, y);
+                return;
+            }
+            map.view(x, y, light);
+            map.see(x, y);
+        }
     }
 };
 module.exports = Util;

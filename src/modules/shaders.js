@@ -10,9 +10,9 @@ module.exports = {
 
             for (i = 0; i < l; i += 4) {
                 if (od[i] === 0 && od[i + 1] === 0 && od[i + 2] === 0) continue;
-                od[i] = (od[i] * r) | 0;
-                od[i + 1] = (od[i + 1] * g) | 0;
-                od[i + 2] = (od[i + 2] * b) | 0;
+                od[i] = od[i] * r;
+                od[i + 1] = od[i + 1] * g;
+                od[i + 2] = od[i + 2] * b;
             }
             ctx.putImageData(origin, 0, 0);
         }

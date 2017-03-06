@@ -5,13 +5,14 @@ class SpriteSheet{
     this.tileHeight = h;
     this.columns = this.img.width / w;
     this.rows = this.img.height / h;
-    this.img.addEventListener('load', () => { 
+    if( this.img.addEventListener )  this.img.addEventListener('load', () => { 
       this.columns = this.img.width / w;
-    this.rows = this.img.height / h;
+      this.rows = this.img.height / h;
     });
   }
 
   draw(ctx, x, y, col, row) {
+    if (this.img.width == 0 && this.img.height == 0) return;
     if (row == null) {
       let c = col % this.columns;
       let r = Math.floor(col / this.columns);

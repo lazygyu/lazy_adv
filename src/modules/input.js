@@ -1,10 +1,9 @@
 class Input{
     constructor(){
-        this.keys = [];
-        this.lastKeys = [];
+        this.keys = new Array(127);
+        this.lastKeys = new Array(127);
         this.keydown = this.keyDownHandlerCallback.bind(this);
         this.keyup = this.keyUpHandlerCallback.bind(this);
-
     }
 
     on(){
@@ -26,7 +25,7 @@ class Input{
 
     update(){
         this.lastKeys = this.keys.slice();
-        this.keys = [];
+        //this.keys = new Array(127);
     }
 
     isPress(key){
