@@ -38,10 +38,18 @@ class Floor {
     //this.createMap(width, height, this.lights);
     let res = createDungeon(width, height, this.sheet, 20);
     this.map = res.map;
-    this.doors = res.doors;
+    this.mapObjects.push.apply(this.mapObjects, res.doors);
     for (let _x = 0; _x < this.width; _x++){
       for (let _y = 0; _y < this.height; _y++){
-        if (this.map[_y][_x] == null) this.map[_y][_x] = new Tile(1, false, false, 17);
+        if (this.map[_y][_x] == null){
+          if( _y < height-1 && this.map[_y+1][_x] !== null && this.map[_y+1][_x].type === 0){
+            this.map[_y][_x] = new Tile(1, false, false, 4);
+          }else{
+            this.map[_y][_x] = new Tile(1, false, false, 17);
+          }
+        }else if(_y < this.height-1 && this.map[_y][_x].type == 1 && this.map[_y+1][_x] && this.map[_y+1][_x].type == 0){
+          this.map[_y][_x].spriteNo = 4;
+        }
       }
     }
     this.layers.push(this.map);
@@ -269,8 +277,6 @@ class Floor {
         if (this.mapTop[y + iy][x + ix]) {
           this.sheet.draw(ctx2, x * conf.TILE_SIZE - x_pad, y * conf.TILE_SIZE - y_pad, this.mapTop[y + iy][x + ix].spriteNo);
         }
-        this.sheet.draw(ctx1, x * conf.TILE_SIZE - x_pad, y * conf.TILE_SIZE - y_pad, Math.round(this.viewmap[y + iy][x + ix] * 8 + 3) * 10);
-        this.sheet.draw(ctx2, x * conf.TILE_SIZE - x_pad, y * conf.TILE_SIZE - y_pad, Math.round(this.viewmap[y + iy][x + ix] * 8 + 3) * 10);
       }
     }
 
@@ -283,6 +289,13 @@ class Floor {
     if (this.ambient) {
       this.ambient(ctx1);
       this.ambient(ctx2);
+    }
+    for(y=0;y<11;y++){
+      for(x=0;x<11;x++){
+        if (y + iy < 0 || x + ix < 0 || x + ix >= this.width || y + iy >= this.height ) continue;
+        this.sheet.draw(ctx1, x * conf.TILE_SIZE - x_pad, y * conf.TILE_SIZE - y_pad, Math.round(this.viewmap[y + iy][x + ix] * 8 + 3) * 10);
+        if (this.mapTop[y + iy][x + ix]) { this.sheet.draw(ctx2, x * conf.TILE_SIZE - x_pad, y * conf.TILE_SIZE - y_pad, Math.round(this.viewmap[y + iy + 1][x + ix] * 8 + 3) * 10); }
+      }
     }
     let imgData = ctx1.getImageData(0, 0, ctx1.canvas.width, ctx1.canvas.height);
     let dt = imgData.data;

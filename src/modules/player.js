@@ -192,8 +192,8 @@ class Player {
           sound.play('footstep1');
         }
         this.dir = 3;
-      } else if (key.isPress(32)) {
-        
+      } else if (key.isPress(13)) {
+        console.log("do");
         let tPos = this.front;
         map.do(this, tPos.x, tPos.y);
       }

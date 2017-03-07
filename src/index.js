@@ -33,7 +33,7 @@ _key.on();
 let first = true;
 
 let player = new Player();
-let floor = new Floor(50, 50, 'building', 1);
+let floor = new Floor(100,100, 'building', 20);
 let renderQueue = [];
 
 let last, cur;
@@ -41,20 +41,14 @@ cur = performance.now()/1000;
 
 function init() {
   let w = 50, h = 50;
-  loop1:
-  for (let i = 0; i < w; i++) {
-    loop2:
-    for (let j = 0; j < h; j++) {
-      if (floor.canMove(j, i)) {
-        player.tilePos.x = j;
-        player.tilePos.y = i;
-        player.realPos.x = j*32;
-        player.realPos.y = i*32;
-        break loop1;
-      }
-    }
-  }
+  
 
+  player.tilePos = {x:50, y:50};
+  while(!floor.map[player.tilePos.y][player.tilePos.x].canMove){
+    player.tilePos.y--;
+    player.tilePos.x--;
+  }
+  player.realPos = {x:player.tilePos.x*conf.TILE_SIZE, y:player.tilePos.y*conf.TILE_SIZE};
   if (first) render();
   first = false;
 }
@@ -70,6 +64,7 @@ function render() {
   player.update(delta, _key, floor);
   floor.update(delta, player);
   _key.update();
+  if( _key.isPress(38)) console.log("press");
   
   ctx.save();
   ctx.fillStyle = "black";
@@ -105,11 +100,11 @@ function render() {
   
   floor.map.forEach((row, y) => {
     row.forEach((t, x) => {
-      if (t.type === 1 || floor.shownmap[y][x] == 0) return true;
+      if (t.type === 1 || floor.shownmap[y][x] === 0 ) return true;
       if (floor.viewmap[y][x] === 0) {
-        cctx.fillStyle = t.type===1?'#633':'#555';
+        cctx.fillStyle = t.spriteNo===14?'#633':'#555';
       } else {
-        cctx.fillStyle = t.type===1?'#c99':'#aaa';
+        cctx.fillStyle = t.spriteNo===14?'#c99':'#aaa';
       }
       cctx.fillRect(340 + x*2, y*2, 2, 2);
     });

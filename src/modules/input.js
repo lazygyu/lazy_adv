@@ -1,7 +1,9 @@
 class Input{
     constructor(){
-        this.keys = new Array(127);
-        this.lastKeys = new Array(127);
+        this.keys = [];
+        this.lastKeys = [];
+        this.down = [];
+        this.up = [];
         this.keydown = this.keyDownHandlerCallback.bind(this);
         this.keyup = this.keyUpHandlerCallback.bind(this);
     }
@@ -17,15 +19,21 @@ class Input{
     }
 
     keyDownHandlerCallback(e){
-        this.keys[e.keyCode] = true;
+        this.down.push(e.keyCode);
+        
     }
     keyUpHandlerCallback(e){
-        this.keys[e.keyCode] = false;
+        this.up.push(e.keyCode);
     }
 
     update(){
         this.lastKeys = this.keys.slice();
-        //this.keys = new Array(127);
+        while(this.down.length > 0){
+            this.keys[this.down.pop()] = true;
+        }
+        while(this.up.length > 0){
+            this.keys[this.up.pop()] = false;
+        }
     }
 
     isPress(key){

@@ -7,16 +7,22 @@ const DIRECTION = {
   SOUTH: 0
 };
 
+const arrDirection = ['SOUTH', 'WEST', 'EAST', 'NORTH'];
+
 function getFeatureLowerBound(c, len) {
-  return c - len / 2;
+  return Math.floor(c - len / 2);
 }
 
 function getFeatureUpperBound(c, len) {
-  return c + (len + 1) / 2;
+  return Math.floor(c + (len + 1) / 2);
+}
+
+function isFeatureWallBound(c, len){
+  return Math.floor(c + (len-1)/2);
 }
 
 function isWall(x, y, xlen, ylen, xt, yt, d) {
-  let a = getFeatureLowerBound, b = getFeatureUpperBound;
+  let a = getFeatureLowerBound, b = isFeatureWallBound;
   switch (d) {
     case DIRECTION.NORTH:
       return xt === a(x, xlen) || xt === b(x, xlen) || yt === y || yt === y - ylen + 1;
@@ -31,7 +37,7 @@ function isWall(x, y, xlen, ylen, xt, yt, d) {
       return xt === x || xt === x - xlen + 1 || yt === a(y, ylen) || yt === b(y, ylen);
       break;
   }
-  return false;
+  throw new Error("Invalid operation");
 }
 
 function getRoomPoints(x, y, xlen, ylen, dir) {
@@ -74,8 +80,8 @@ function makeRoom(x, y, mx, my, dir, arr) {
   let xlen = util.randomInt(4, mx), ylen = util.randomInt(4, my);
   let points = getRoomPoints(x, y, xlen, ylen, dir);
 
-  if (points.some(s => s.y < 0 || s.y >= arr.length || s.x < 0 || s.x >= arr[0].length || arr[y][x] !== null)) return false;
-
+  if (points.some(s => s.y < 0 || s.y >= arr.length || s.x < 0 || s.x >= arr[0].length || !isUnused(arr, s.x, s.y))) return false;
+  
   points.forEach(p => {
     let tmp = null;
     if (isWall(x, y, xlen, ylen, p.x, p.y, dir)) {
@@ -99,21 +105,22 @@ function makeCorridor(x, y, width, height, length, dir, arr) {
       xtemp = x;
       for (ytemp = y; ytemp > (y - len); ytemp--) {
         if (ytemp < 0 || ytemp > height) return false;
-        if (getCellProp(arr, 'type', xtemp, ytemp) != null) return false;
+        if (!isUnused(arr, xtemp, ytemp)) return false;
       }
       for (ytemp = y; ytemp > (y - len); ytemp--) {
-        arr[ytemp][xtemp] = new Tile(0, true, true, 13);
+        arr[ytemp][xtemp] = new Tile(0, true, true, 11);
+        
       }
       break;
     case DIRECTION.EAST:
       if (y < 0 || y > height) return false;
       ytemp = y;
-      for (xtemp = x; temp < (x + len); xtemp++) {
+      for (xtemp = x; xtemp < (x + len); xtemp++) {
         if (xtemp < 0 || xtemp > width) return false;
-        if (getCellProp(arr, 'type', xtemp, ytemp) != null) return false;
+        if (!isUnused(arr, xtemp, ytemp)) return false;
       }
       for (xtemp = x; xtemp < (x + len); xtemp++) {
-        arr[ytemp][xtemp] = new Tile(0, true, true, 13);
+        arr[ytemp][xtemp] = new Tile(0, true, true, 11);
       }
       break;
     case DIRECTION.SOUTH:
@@ -121,10 +128,10 @@ function makeCorridor(x, y, width, height, length, dir, arr) {
       xtemp = x;
       for (ytemp = y; ytemp < (y + len); ytemp++) {
         if (ytemp < 0 || ytemp > height) return false;
-        if (getCellProp(arr, 'type', xtemp, ytemp) != null) return false;
+        if (!isUnused(arr, xtemp, ytemp)) return false;
       }
       for (ytemp = y; ytemp < (y + len); ytemp++) {
-        arr[ytemp][xtemp] = new Tile(0, true, true, 13);
+        arr[ytemp][xtemp] = new Tile(0, true, true, 11);
       }
       break;
     case DIRECTION.WEST:
@@ -132,10 +139,15 @@ function makeCorridor(x, y, width, height, length, dir, arr) {
       ytemp = y;
       for (xtemp = x; xtemp > (x - len); xtemp--) {
         if (xtemp < 0 || xtemp > width) return false;
-        if (getCellProp(arr, 'type', xtemp, ytemp) != null) return false;
+        if (!isUnused(arr, xtemp, ytemp)) return false;
+      }
+      for (xtemp = x; xtemp > (x - len); xtemp--) {
+        arr[ytemp][xtemp]= new Tile(0,true, true, 11);
       }
       break;
   }
+  
+  
   return true;
 }
 
@@ -170,6 +182,12 @@ function getCellProp(arr, prop, x, y) {
   if (!arr[y][x]) return null;
   return arr[y][x][prop];
 }
+function isUnused(arr, x, y){
+  if( y < 0 || y >= arr.length ) return false;
+  if( x < 0 || x >= arr.length ) return false;
+  if( arr[y][x] !== null ) return false;
+  return true;
+}
 
 let _object = 0;
 
@@ -183,23 +201,25 @@ function createDungeon(width, height, sheet, inobj) {
   let currentFeatures = 1;
   for (let countingTries = 0; countingTries < 1000; countingTries++) {
     if (currentFeatures === _object) break;
-    let newx = 0, xmod = 0, newy = 0, ymod = 0, validTile = null;
+    let newx = 0, xmod = 0, newy = 0, ymod = 0, validTile = null, canReach;
 
     for (let testing = 0; testing < 1000; testing++) {
       newx = util.randomInt(1, width - 1);
       newy = util.randomInt(1, height - 1);
-
-      if (arr[newy][newx] && (arr[newy][newx].type === 1 || arr[newy][newx].spriteNo === 13)) {
+      canReach = null;
+      if (arr[newy][newx] && (arr[newy][newx].spriteNo == 11 || arr[newy][newx].spriteNo == 17) ) {
+        
         let surroundings = getSurroundings(newx, newy, width, height, arr);
-        let canReach = surroundings.find(s => (s !== null) && s.tile && (s.tile.spriteNo === 13 || s.tile.spriteNo === 14 || s.tile.type === 0));
+        canReach = surroundings.find(s => (s !== null) && s.tile && (s.tile.canMove));
         if (canReach == null) {
           continue;
         }
+        
         validTile = canReach.dir;
-        switch (canReach.dir) {
+        switch (validTile) {
           case DIRECTION.NORTH:
-            ymod = 0;
-            xmod = -1;
+            ymod = -1;
+            xmod = 0;
             break;
           case DIRECTION.EAST:
             xmod = 1;
@@ -213,6 +233,8 @@ function createDungeon(width, height, sheet, inobj) {
             xmod = -1;
             ymod = 0;
             break;
+          default :
+            throw new Error("Invalid operation");
         }
 
         if (doors.some(d =>
@@ -222,23 +244,40 @@ function createDungeon(width, height, sheet, inobj) {
           (d.x === newx + 1 && d.y === newy))) {
           validTile = null;
         }
-        if (!validTile) break;
-
+        if (validTile != null) break;
       }
     }
     if (validTile) {
+      
+      
       let feature = util.randomInt(0, 100);
       if (feature <= 75) {
+        
         if (makeRoom(newx + xmod, newy + ymod, 8, 6, validTile, arr)) {
+          
           currentFeatures++;
-          arr[newy][newx] = new Tile(0, true, true, 14);
-          arr[newy + ymod][newx + xmod] = new Tile(0, true, true, 14);
-          doors.push(new Door(1, sheet, newx, newy, null));
+          arr[newy][newx] = new Tile(0, true, true, 11);
+          arr[newy + ymod][newx + xmod] = new Tile(0, true, true, 11);
+
+          let tDoor = null;
+          switch(validTile){
+            case DIRECTION.EAST:
+            case DIRECTION.WEST:
+              tDoor = new Door(1, sheet, newx, newy, null);
+              break;
+            default:
+              tDoor = new Door(0, sheet, newx, newy, null);
+          } 
+          
+          doors.push(tDoor);
         }
       } else if (feature > 75) {
-        if (makeCorridor(newx + xmod, newy + ymod, 6, validTile)) {
+        
+        if (makeCorridor(newx + xmod, newy + ymod, width, height, 6, validTile, arr)) {
+        
           currentFeatures++;
-          arr[newy][newx] = new Tile(0, true, true, 13);
+          arr[newy][newx] = new Tile(0, true, true, 11);
+          arr[newy+ymod][newx+xmod] = new Tile(0, true, true, 11);
         }
       }
     }
