@@ -176,7 +176,7 @@ class Floor {
     
     if (this.ambient) {
       this.ambient(ctx1);
-      //this.ambient(ctx2);
+      this.ambient(ctx2);
     }
     for(y=0;y<11;y++){
       for(x=0;x<11;x++){

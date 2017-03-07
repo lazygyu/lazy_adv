@@ -745,23 +745,18 @@
 	    ambientLight: function (color) {
 	        let cl = color;
 	        let r = cl.r, g = cl.g, b = cl.b;
-	        let fnc = gpu.createKernel(function (d, arr) {
-	            var t = (this.dimensions.y - this.thread.y) * this.dimensions.x * 4 + (this.thread.x * 4);
-	            this.color(
-	                d[t] / 255  * arr[0],
-	                d[t + 1] / 255 * arr[1],
-	                d[t + 2] / 255 * arr[2],
-	                1-d[t + 3] / 255);
-	            }, { mode:'gpu',graphical:true });
-	        
 	        return function (ctx) {
 	            let origin = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
 	            let od = origin.data, l = origin.data.length;
 	            let i;
 
-	            fnc.dimensions([ctx.canvas.width, ctx.canvas.height])(od, [r, g, b]);
-	            let cv = fnc.getCanvas('gpu');
-	            ctx.drawImage(cv, 0, 0);
+	            for (i = 0; i < l; i += 4) {
+	                if (od[i] === 0 && od[i + 1] === 0 && od[i + 2] === 0) continue;
+	                od[i] = od[i] * r;
+	                od[i + 1] = od[i + 1] * g;
+	                od[i + 2] = od[i + 2] * b;
+	            }
+	            ctx.putImageData(origin, 0, 0);
 	        }
 	    },
 	    spotLight: function (ctx, light) {
@@ -1226,7 +1221,7 @@
 	    
 	    if (this.ambient) {
 	      this.ambient(ctx1);
-	      //this.ambient(ctx2);
+	      this.ambient(ctx2);
 	    }
 	    for(y=0;y<11;y++){
 	      for(x=0;x<11;x++){
