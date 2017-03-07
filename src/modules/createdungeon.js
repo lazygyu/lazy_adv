@@ -108,7 +108,7 @@ function makeCorridor(x, y, width, height, length, dir, arr) {
         if (!isUnused(arr, xtemp, ytemp)) return false;
       }
       for (ytemp = y; ytemp > (y - len); ytemp--) {
-        arr[ytemp][xtemp] = new Tile(0, true, true, 11);
+        arr[ytemp][xtemp] = new Tile(0, true, true, 13);
         
       }
       break;
@@ -120,7 +120,7 @@ function makeCorridor(x, y, width, height, length, dir, arr) {
         if (!isUnused(arr, xtemp, ytemp)) return false;
       }
       for (xtemp = x; xtemp < (x + len); xtemp++) {
-        arr[ytemp][xtemp] = new Tile(0, true, true, 11);
+        arr[ytemp][xtemp] = new Tile(0, true, true, 13);
       }
       break;
     case DIRECTION.SOUTH:
@@ -131,7 +131,7 @@ function makeCorridor(x, y, width, height, length, dir, arr) {
         if (!isUnused(arr, xtemp, ytemp)) return false;
       }
       for (ytemp = y; ytemp < (y + len); ytemp++) {
-        arr[ytemp][xtemp] = new Tile(0, true, true, 11);
+        arr[ytemp][xtemp] = new Tile(0, true, true, 13);
       }
       break;
     case DIRECTION.WEST:
@@ -142,7 +142,7 @@ function makeCorridor(x, y, width, height, length, dir, arr) {
         if (!isUnused(arr, xtemp, ytemp)) return false;
       }
       for (xtemp = x; xtemp > (x - len); xtemp--) {
-        arr[ytemp][xtemp]= new Tile(0,true, true, 11);
+        arr[ytemp][xtemp]= new Tile(0,true, true, 13);
       }
       break;
   }
@@ -193,7 +193,7 @@ let _object = 0;
 
 function createDungeon(width, height, sheet, inobj) {
   _object = inobj < 1 ? 10 : inobj;
-  let doors = [];
+  let doors = [], lights = [];
   let arr = util.initArray(width, height, null);
   
   makeRoom((width / 2) | 0, (height / 2) | 0, 8, 6, util.randomInt(0,4), arr);
@@ -207,7 +207,7 @@ function createDungeon(width, height, sheet, inobj) {
       newx = util.randomInt(1, width - 1);
       newy = util.randomInt(1, height - 1);
       canReach = null;
-      if (arr[newy][newx] && (arr[newy][newx].spriteNo == 11 || arr[newy][newx].spriteNo == 17) ) {
+      if (arr[newy][newx] && (arr[newy][newx].spriteNo == 13 || arr[newy][newx].spriteNo == 17) ) {
         
         let surroundings = getSurroundings(newx, newy, width, height, arr);
         canReach = surroundings.find(s => (s !== null) && s.tile && (s.tile.canMove));
@@ -256,8 +256,8 @@ function createDungeon(width, height, sheet, inobj) {
         if (makeRoom(newx + xmod, newy + ymod, 8, 6, validTile, arr)) {
           
           currentFeatures++;
-          arr[newy][newx] = new Tile(0, true, true, 11);
-          arr[newy + ymod][newx + xmod] = new Tile(0, true, true, 11);
+          arr[newy][newx] = new Tile(0, true, true, 13);
+          arr[newy + ymod][newx + xmod] = new Tile(0, true, true, 13);
 
           let tDoor = null;
           switch(validTile){
@@ -268,21 +268,26 @@ function createDungeon(width, height, sheet, inobj) {
             default:
               tDoor = new Door(0, sheet, newx, newy, null);
           } 
-          
           doors.push(tDoor);
+          lights.push({ x: (newx + xmod) * 32 + 16, y: (newy + ymod) * 32 + 16, color: {r:Math.random(), g:Math.random(), b:Math.random()}, brightness: util.randomInt(3, 6) * 32 });
         }
       } else if (feature > 75) {
         
         if (makeCorridor(newx + xmod, newy + ymod, width, height, 6, validTile, arr)) {
         
           currentFeatures++;
-          arr[newy][newx] = new Tile(0, true, true, 11);
-          arr[newy+ymod][newx+xmod] = new Tile(0, true, true, 11);
+          arr[newy][newx] = new Tile(0, true, true, 13);
+          
         }
       }
     }
   }
-  return {map:arr, doors:doors};
+  
+  
+  
+  
+  console.dir(lights);
+  return {map:arr, doors:doors, lights:lights};
 }
 
 module.exports = createDungeon;

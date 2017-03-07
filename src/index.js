@@ -8,6 +8,7 @@ const conf = require('./modules/conf.js');
 const Input = require('./modules/input.js');
 const Floor = require('./modules/floor.js');
 const SoundManager = require('./modules/soundmanager.js');
+const toaster = require('./modules/toaster.js');
 
 SoundManager.add("door", "./sounds/door.mp3");
 SoundManager.add("footstep1", "./sounds/footstep1.mp3");
@@ -51,6 +52,7 @@ function init() {
   player.realPos = {x:player.tilePos.x*conf.TILE_SIZE, y:player.tilePos.y*conf.TILE_SIZE};
   if (first) render();
   first = false;
+  toaster.add("Game Start!");
 }
 
 
@@ -63,6 +65,7 @@ function render() {
   
   player.update(delta, _key, floor);
   floor.update(delta, player);
+  toaster.update(delta);
   _key.update();
   if( _key.isPress(38)) console.log("press");
   
@@ -114,7 +117,9 @@ function render() {
   cctx.fillRect(340 + player.tilePos.x*2, player.tilePos.y*2, 2, 2);
   
   cctx.fillStyle = "white";
-  cctx.fillText( (1/delta)|0 + "fps", 500, 20 );
+  cctx.fillText((1 / delta) | 0 + "fps", 500, 20);
+  
+  toaster.render(cctx);
   requestAnimationFrame(render);
 
 }

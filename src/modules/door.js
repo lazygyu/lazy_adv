@@ -1,5 +1,6 @@
 const conf = require('./conf.js');
 const sound = require('./soundmanager.js');
+const toaster = require('./toaster.js');
 class Door{
   constructor(dir, sheet, x, y, key) {
     this.dir = dir;
@@ -43,6 +44,7 @@ class Door{
         player.use(this.locked);
         this.locked = null;
       } else {
+        toaster.add("Door is locked");
         return;
       }
     }
@@ -51,6 +53,7 @@ class Door{
     this.canMove = true;
     this.openTimer = 0.2;
     sound.play(this.openSound);
+    
   }
 }
 

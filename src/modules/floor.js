@@ -36,15 +36,16 @@ class Floor {
     this.map = util.initArray(width, height, null);
     this.mapTop = util.initArray(width, height, null);
     //this.createMap(width, height, this.lights);
-    let res = createDungeon(width, height, this.sheet, 20);
+    let res = createDungeon(width, height, this.sheet, 50);
     this.map = res.map;
+    this.lights.push.apply(this.lights, res.lights);
     this.mapObjects.push.apply(this.mapObjects, res.doors);
     for (let _x = 0; _x < this.width; _x++){
       for (let _y = 0; _y < this.height; _y++){
-        if (this.map[_y][_x] == null){
-          if( _y < height-1 && this.map[_y+1][_x] !== null && this.map[_y+1][_x].type === 0){
+        if (this.map[_y][_x] == null) {
+          if (_y < height - 1 && this.map[_y + 1][_x] !== null && this.map[_y + 1][_x].type === 0) {
             this.map[_y][_x] = new Tile(1, false, false, 4);
-          }else{
+          } else {
             this.map[_y][_x] = new Tile(1, false, false, 17);
           }
         }else if(_y < this.height-1 && this.map[_y][_x].type == 1 && this.map[_y+1][_x] && this.map[_y+1][_x].type == 0){
@@ -52,148 +53,34 @@ class Floor {
         }
       }
     }
+    for (let _x = 0; _x < this.width; _x++){
+      for (let _y = 0; _y < this.height; _y++){
+        if (_x > 0 && _x < this.width - 1 && this.map[_y][_x].type == 1 && this.map[_y][_x - 1].type == 0 && this.map[_y][_x + 1].type == 0) {
+          if (_y > 0 && this.map[_y - 1][_x].type == 0) {
+            this.mapTop[_y - 1][_x] = new Tile(1, false, false, 9);
+          } else {
+            this.mapTop[_y - 1][_x] = new Tile(1, false, false, 19);
+          }
+        } else if (_x > 0 && this.map[_y][_x].type == 1 && this.map[_y][_x - 1].type == 0) {
+          if (_y > 0 && this.map[_y - 1][_x].type == 0) {
+            this.mapTop[_y - 1][_x] = new Tile(1, false, false, 6);
+          } else {
+            this.mapTop[_y - 1][_x] = new Tile(1, false, false, 16);
+          }
+         } else if (_x < this.width - 1 && this.map[_y][_x].type == 1 && this.map[_y][_x + 1].type == 0) {
+           if (_y > 0 && this.map[_y - 1][_x].type == 0) {
+             this.mapTop[_y - 1][_x] = new Tile(1, false, false, 8);
+           } else {
+             this.mapTop[_y - 1][_x] = new Tile(1, false, false, 18);
+          }
+         } else if (_y > 0 && this.map[_y][_x].type == 1 && this.map[_y - 1][_x].type == 0) {
+           this.mapTop[_y - 1][_x] = new Tile(1, false, false, 7); 
+        }
+      }
+    }
     this.layers.push(this.map);
     this.viewmap = util.initArray(width, height, 0);
     this.shownmap = util.initArray(width, height, 0);
-  }
-
-  /**
-   * @param {number} width
-   * @param {number} height
-   * @return Tile[][]
-   */
-  createMap(width, height) {
-    let arr = [];
-    let second = util.initArray(width, height, null);
-    for (let i = 0; i < height; i++) {
-      arr.push([]);
-      for (let j = 0; j < width; j++) {
-        arr[i].push(new Tile(1, false, false, 17));
-      }
-    }
-
-    
-
-    let root = new Leaf(0, 0, width, height);
-    let leafs = [root];
-    let did = true;
-    // devide
-    while (did) {
-      did = false;
-      leafs.forEach((l) => {
-        if (!l.left && !l.right) {
-          if (l.w > conf.MAX_LEAF || l.h > conf.MAX_LEAF || Math.random() > .75) {
-            if (l.split()) {
-              leafs.push(l.left);
-              leafs.push(l.right);
-              did = true;
-            }
-          }
-        }
-      });
-    }
-    root.createRooms();
-
-    leafs.forEach(l => {
-      if (l.room) {
-        for (let i = 0; i < l.room.h; i++) {
-          for (let j = 0; j < l.room.w; j++) {
-            arr[i + l.room.y][j + l.room.x].set(0, true, true, 14);
-          }
-        }
-      }
-
-      if (l.halls.length > 0) {
-        l.halls.forEach(hs => {
-          hs.forEach(h => {
-            for (let i = 0; i < h.h; i++) {
-              for (let j = 0; j < h.w; j++) {
-                arr[i + h.y][j + h.x].set(0, true, true, 14);
-              }
-            }
-          });
-        });
-      }
-    });
-
-    for (let y = 0; y < height - 1; y++) {
-      for (let x = 0; x < width; x++) {
-        if (arr[y][x].type == 1) {
-          if (arr[y + 1][x].type == 0) {
-            
-              if (y > 0) {
-                if (arr[y - 1][x].type === 0) {
-                  if (x > 0 && arr[y][x - 1].type === 0) {
-                    second[y - 1][x] = new Tile(1, false, false, 6);
-                  } else if (x < width-1 && arr[y][x + 1].type === 0) {
-                    second[y - 1][x] = new Tile(1, false, false, 8);
-                  } else {
-                    second[y - 1][x] = new Tile(1, false, false, 7);
-                  }
-                
-                } else if (arr[y][x + 1].type === 0 && x > 0 && arr[y][x - 1].type === 0) {
-                  second[y - 1][x] = new Tile(1, false, false, 19);
-                } else if (arr[y][x + 1].type === 0) {
-                  second[y - 1][x] = new Tile(1, false, false, 18);
-                } else if (x > 0 && arr[y][x - 1].type === 0) {
-                  second[y - 1][x] = new Tile(1, false, false, 16);
-                } else {
-                  second[y - 1][x] = new Tile(1, false, false, 17);
-                }
-              }
-              arr[y][x].set(1, false, false, 4);
-            
-          } else if (y > 0 && arr[y - 1][x].type == 0) {
-            if (x > 0 && arr[y][x - 1].type == 0) {
-              if (x < width && arr[y][x + 1].type == 0) {
-                if (y > 0) second[y - 1][x] = new Tile(1, false, false, 9);
-                //arr[y][x].set(1, false, false, 9)
-              } else {
-                if (y > 0) second[y - 1][x] = new Tile(1, false, false, 6);
-                //arr[y][x].set(1, false, false, 6);
-              }
-            } else if (x < width - 1 && arr[y][x + 1].type == 0) {
-              if (y > 0) second[y - 1][x] = new Tile(1, false, false, 8);
-              //arr[y][x].set(1, false, false, 8);
-            } else {
-              if (y > 0) second[y - 1][x] = new Tile(1, false, false, 7);
-              //arr[y][x].set(1, false, false, 7);
-            }
-          } else if (x < width - 1 && (arr[y][x + 1].type == 0 || arr[y + 1][x + 1].type == 0)) {
-            if (x > 0 && arr[y][x - 1].type === 0) {
-              if (y > 0) second[y - 1][x] = new Tile(1, false, false, 19);
-              //arr[y][x].set(1, false, false, 19);
-            } else {
-              if (y > 0 && arr[y][x+1].type !== 1 ) second[y - 1][x] = new Tile(1, false, false, 18);
-              //arr[y][x].set(1, false, false, 18);
-            }
-          } else if (x > 0 && (arr[y][x - 1].type == 0)) {
-            if (y > 0) second[y - 1][x] = new Tile(1, false, false, 16);
-            //arr[y][x].set(1, false, false, 16);
-          }
-        }
-      }
-    }
-
-    arr.forEach((row, y) => {
-      row.forEach((t, x) => {
-        if ((t.spriteNo === 4 || t.spriteNo === 6 || t.spriteNo === 7 || t.spriteNo === 18) && Math.random() < 0.01) {
-          if (t.spriteNo === 4) t.spriteNo = 15;
-          this.lights.push({ x: x * conf.TILE_SIZE, y: y * conf.TILE_SIZE, color: { r: 1, g: 1, b: 0 }, brightness: 128 });
-        } else if (t.type === 0 && ((y > 0 && arr[y - 1][x].type === 1) || y === 0) && ((y < this.height - 1 && arr[y + 1][x].type == 1) || y === this.height - 1)) {
-          if (x > 2 && arr[y][x - 1].type === 0 && arr[y][x - 2].type === 0 && y > 0 && arr[y - 1][x - 1].type === 0 && arr[y - 1][x - 1].type === 0) {
-            this.mapObjects.push(new Door(1, this.sheet, x, y));
-          }
-          
-        } else if (t.type === 0 && ((x > 0 && arr[y][x - 1].type === 1) || x === 0) && ((x < this.width - 1 && arr[y][x + 1].type === 1) || x === this.width - 1)) {
-          if (Math.random() < 0.2) {
-            this.mapObjects.push(new Door(0, this.sheet, x, y));
-          }
-        }
-      });
-    });
-    this.map = arr;
-    this.mapTop = second;
   }
 
   canMove(x, y) {
@@ -236,9 +123,9 @@ class Floor {
 
   getObject(x, y) {
     let objs = [];
-    Array.prototype.push.call(objs, this.monsters.map(m => m.x == x && m.y == y));
-    Array.prototype.push.call(objs, this.items.map(i => i.x == x && i.y == y));
-    Array.prototype.push.call(objs, this.mapObjects.map(i => i.x == x && i.y == y));
+    Array.prototype.push.call(objs, this.monsters.filter(m => m.x == x && m.y == y));
+    Array.prototype.push.call(objs, this.items.filter(i => i.x == x && i.y == y));
+    Array.prototype.push.call(objs, this.mapObjects.filter(i => i.x == x && i.y == y));
     return objs;
   }
 
@@ -286,17 +173,19 @@ class Floor {
     });
 
     let lights = this.lights.filter(l => { return (l.x + l.brightness) > minx && (l.x - l.brightness) < maxx && (l.y + l.brightness) > miny && (l.y - l.brightness) < maxy; });
+    
     if (this.ambient) {
       this.ambient(ctx1);
-      this.ambient(ctx2);
+      //this.ambient(ctx2);
     }
     for(y=0;y<11;y++){
       for(x=0;x<11;x++){
         if (y + iy < 0 || x + ix < 0 || x + ix >= this.width || y + iy >= this.height ) continue;
-        this.sheet.draw(ctx1, x * conf.TILE_SIZE - x_pad, y * conf.TILE_SIZE - y_pad, Math.round(this.viewmap[y + iy][x + ix] * 8 + 3) * 10);
-        if (this.mapTop[y + iy][x + ix]) { this.sheet.draw(ctx2, x * conf.TILE_SIZE - x_pad, y * conf.TILE_SIZE - y_pad, Math.round(this.viewmap[y + iy + 1][x + ix] * 8 + 3) * 10); }
+        if( this.shownmap[y+iy][x+ix] ) this.sheet.draw(ctx1, x * conf.TILE_SIZE - x_pad, y * conf.TILE_SIZE - y_pad, Math.round(this.viewmap[y + iy][x + ix] * 8 + 3) * 10);
+        this.sheet.draw(ctx2, x * conf.TILE_SIZE - x_pad, y * conf.TILE_SIZE - y_pad, Math.round(this.viewmap[y + iy][x + ix] * 8 + 3) * 10);
       }
     }
+    
     let imgData = ctx1.getImageData(0, 0, ctx1.canvas.width, ctx1.canvas.height);
     let dt = imgData.data;
     lights.forEach(l => {
@@ -319,6 +208,7 @@ class Floor {
       }
     });
     ctx1.putImageData(imgData, 0, 0);
+    
   }
 
 

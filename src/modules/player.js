@@ -164,35 +164,35 @@ class Player {
   update(delta, key, map) {
     if (!this.loaded) return;
     if (this.state == 'stand') {
-      if (key.isDown(37)) {
+      if (key.isDown(37) || key.btnDown(14) || key.axes.x < -0.5) {
         if (this.dir == 2 && this.tilePos.x > 0 && map.canMove(this.tilePos.x - 1, this.tilePos.y)) {
           this.tilePos.x--;
           this.state = "walk";
           sound.play('footstep1');
         }
         this.dir = 2;
-      } else if (key.isDown(39)) {
+      } else if (key.isDown(39) || key.btnDown(15) || key.axes.x > 0.5) {
         if (this.dir == 1 && map.canMove(this.tilePos.x + 1, this.tilePos.y)) {
           this.tilePos.x++;
           this.state = "walk";
           sound.play('footstep1');
         }
         this.dir = 1;
-      } else if (key.isDown(40)) {
+      } else if (key.isDown(40) || key.btnDown(13) || key.axes.y > 0.5) {
         if (this.dir == 0 && map.canMove(this.tilePos.x, this.tilePos.y+1)) {
           this.tilePos.y++;
           this.state = "walk";
           sound.play('footstep1');
         }
         this.dir = 0;
-      } else if (key.isDown(38)) {
+      } else if (key.isDown(38) || key.btnDown(12) || key.axes.y < -0.5) {
         if (this.dir == 3 && this.tilePos.y > 0 && map.canMove(this.tilePos.x, this.tilePos.y-1)) {
           this.tilePos.y--;
           this.state = "walk";
           sound.play('footstep1');
         }
         this.dir = 3;
-      } else if (key.isPress(13)) {
+      } else if (key.isPress(13) || key.btnPress(0)) {
         console.log("do");
         let tPos = this.front;
         map.do(this, tPos.x, tPos.y);
@@ -249,9 +249,11 @@ class Player {
       lights.forEach(l => {
 
         if (typeof l == 'function') {
+          
           l(this.ttx);
           tempBuff = this.ttx.getImageData(0, 0, 32, 64);
           tt = tempBuff.data;
+          
         } else {
 
           let lx = l.x;
