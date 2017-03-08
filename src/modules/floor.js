@@ -28,6 +28,11 @@ class Floor {
     this.layers = [];
     this.rendered = [document.createElement("canvas"), document.createElement("canvas")];
     this.rendered.forEach(cv => {
+      cv.width = width*32;
+      cv.height = height*32;
+    });
+    this.buffers = [document.createElement("canvas"), document.createElement("canvas")];
+    this.buffers.forEach(cv=>{
       cv.width = 270;
       cv.height = 270;
     });
@@ -81,6 +86,8 @@ class Floor {
     this.layers.push(this.map);
     this.viewmap = util.initArray(width, height, 0);
     this.shownmap = util.initArray(width, height, 0);
+    this.tileset.addEventListener("load", ()=>{ this.makeBuffer(); });
+    
   }
 
   canMove(x, y) {
@@ -130,11 +137,10 @@ class Floor {
   }
 
   draw(ctx, layer) {
-    ctx.drawImage(this.rendered[layer], 0, 0);
+    ctx.drawImage(this.buffers[layer], 0, 0);
   }
 
   do(player, x, y) {
-    console.log("player do to " + x + "," + y);
     this.items.forEach(i => { 
       if (i.x == x && i.y == y) i.do(player);
     });
@@ -146,68 +152,88 @@ class Floor {
     });
   }
 
+  makeBuffer(){
+    let ctx1 = this.rendered[0].getContext("2d");
+    let ctx2 = this.rendered[1].getContext("2d");
+    
+    for(let x=0;x<this.width;x++){
+      for(let y=0;y<this.height;y++){
+        if( this.map[y][x] ){
+          this.sheet.draw(ctx1, x*conf.TILE_SIZE, y*conf.TILE_SIZE, this.map[y][x].spriteNo);
+        }
+        if( this.mapTop[y][x]){
+          this.sheet.draw(ctx2, x*conf.TILE_SIZE, y*conf.TILE_SIZE, this.mapTop[y][x].spriteNo);
+        }
+      }
+    }
+    if(this.ambient){
+      this.ambient(ctx1);
+      this.ambient(ctx2);
+    }
+    
+    let imgData1 = ctx1.getImageData(0, 0, ctx1.canvas.width, ctx1.canvas.height);
+    let imgData2 = ctx2.getImageData(0, 0, ctx2.canvas.width, ctx2.canvas.height);
+    let dt = imgData1.data;
+    let dt2 = imgData2.data;
+    this.lights.forEach(l => {
+      let lx = l.x, ly = l.y;
+      let _minx = lx - l.brightness, _maxx = lx + l.brightness;
+      let _miny = ly - l.brightness, _maxy = ly + l.brightness;
+      let r = l.color.r, b = l.color.b, g = l.color.g;
+      let x, y, cur, dist;
+      for (y = _miny; y < _maxy; y++) {
+        if (y < 0 || y >= imgData1.height) continue;
+        for (x = _minx; x < _maxx; x++) {
+          if (x < 0 || x >= imgData1.width) continue;
+          cur = (y * imgData1.width * 4) + x * 4;
+          
+          dist = 1 - util.distance(lx, ly, x, y) / l.brightness;
+          dt[cur] += Math.max(0, dt[cur] * r * dist);
+          dt[cur + 1] += Math.max(0, dt[cur + 1] * g * dist);
+          dt[cur + 2] += Math.max(0, dt[cur + 2] * b * dist);
+          dt2[cur] += Math.max(0, dt2[cur] * r * dist);
+          dt2[cur + 1] += Math.max(0, dt2[cur + 1] * g * dist);
+          dt2[cur + 2] += Math.max(0, dt2[cur + 2] * b * dist);
+        }
+      }
+    });
+    ctx1.putImageData(imgData1, 0, 0);
+    ctx2.putImageData(imgData2, 0, 0);
+
+  }
+
   render(ctx, sx, sy) {
     let x, y;
     let ix = Math.floor(sx / conf.TILE_SIZE) - 4, iy = Math.floor(sy / conf.TILE_SIZE) - 4;
     let x_pad = sx % conf.TILE_SIZE, y_pad = sy % conf.TILE_SIZE;
     let minx = sx - 4 * conf.TILE_SIZE, maxx = sx + 5 * conf.TILE_SIZE;
     let miny = sy - 4 * conf.TILE_SIZE, maxy = sy + 5 * conf.TILE_SIZE;
-    let ctx1 = this.rendered[0].getContext("2d");
-    let ctx2 = this.rendered[1].getContext("2d");
+    let ctx1 = this.buffers[0].getContext("2d");
+    let ctx2 = this.buffers[1].getContext("2d");
     ctx1.clearRect(0, 0, ctx1.canvas.width, ctx1.canvas.height);
     ctx2.clearRect(0, 0, ctx2.canvas.width, ctx2.canvas.height);
-
-    for (y = 0; y < 11; y++) {
-      for (x = 0; x < 11; x++) {
-        if (y + iy < 0 || x + ix < 0 || x + ix >= this.width || y + iy >= this.height || !this.shownmap[y + iy][x + ix]) continue;
-        this.sheet.draw(ctx1, x * conf.TILE_SIZE - x_pad, y * conf.TILE_SIZE - y_pad, this.map[y + iy][x + ix].spriteNo);
-        if (this.mapTop[y + iy][x + ix]) {
-          this.sheet.draw(ctx2, x * conf.TILE_SIZE - x_pad, y * conf.TILE_SIZE - y_pad, this.mapTop[y + iy][x + ix].spriteNo);
-        }
-      }
-    }
+    ctx1.drawImage(this.rendered[0], minx, miny, ctx1.canvas.width, ctx1.canvas.height, 0, 0,ctx1.canvas.width, ctx1.canvas.height);
+    ctx2.drawImage(this.rendered[1], minx, miny, ctx2.canvas.width, ctx2.canvas.height, 0, 0,ctx1.canvas.width, ctx1.canvas.height);
+    
 
     this.mapObjects.forEach((o) => { 
       if (this.shownmap[o.y][o.x] === 0) return true;
       o.render(ctx1, ctx2, minx, miny);
     });
 
-    let lights = this.lights.filter(l => { return (l.x + l.brightness) > minx && (l.x - l.brightness) < maxx && (l.y + l.brightness) > miny && (l.y - l.brightness) < maxy; });
-    
-    if (this.ambient) {
-      this.ambient(ctx1);
-      this.ambient(ctx2);
-    }
+    ctx1.fillStyle = "black";
+    ctx2.fillStyle = "black";
     for(y=0;y<11;y++){
       for(x=0;x<11;x++){
         if (y + iy < 0 || x + ix < 0 || x + ix >= this.width || y + iy >= this.height ) continue;
+        if( !this.shownmap[y+iy][x+ix]) {
+            ctx1.fillRect(x*conf.TILE_SIZE-x_pad, y*conf.TILE_SIZE-y_pad, conf.TILE_SIZE, conf.TILE_SIZE);
+            ctx2.fillRect(x*conf.TILE_SIZE-x_pad, (y-1)*conf.TILE_SIZE-y_pad, conf.TILE_SIZE, conf.TILE_SIZE);
+        }
         if( this.shownmap[y+iy][x+ix] ) this.sheet.draw(ctx1, x * conf.TILE_SIZE - x_pad, y * conf.TILE_SIZE - y_pad, Math.round(this.viewmap[y + iy][x + ix] * 8 + 3) * 10);
         this.sheet.draw(ctx2, x * conf.TILE_SIZE - x_pad, y * conf.TILE_SIZE - y_pad, Math.round(this.viewmap[y + iy][x + ix] * 8 + 3) * 10);
       }
     }
-    
-    let imgData = ctx1.getImageData(0, 0, ctx1.canvas.width, ctx1.canvas.height);
-    let dt = imgData.data;
-    lights.forEach(l => {
-      let lx = l.x - minx, ly = l.y - miny;
-      let _minx = lx - l.brightness, _maxx = lx + l.brightness;
-      let _miny = ly - l.brightness, _maxy = ly + l.brightness;
-      let r = l.color.r, b = l.color.b, g = l.color.g;
-      let x, y, cur, dist;
-      for (y = _miny; y < _maxy; y++) {
-        if (y < 0 || y >= imgData.height) continue;
-        for (x = _minx; x < _maxx; x++) {
-          if (x < 0 || x >= imgData.width) continue;
-          cur = (y * imgData.width * 4) + x * 4;
-          if (dt[cur] === 0 && dt[cur + 1] === 0 && dt[cur + 2] === 0) continue;
-          dist = 1 - util.distance(lx, ly, x, y) / l.brightness;
-          dt[cur] += Math.max(0, dt[cur] * r * dist);
-          dt[cur + 1] += Math.max(0, dt[cur + 1] * g * dist);
-          dt[cur + 2] += Math.max(0, dt[cur + 2] * b * dist);
-        }
-      }
-    });
-    ctx1.putImageData(imgData, 0, 0);
     
   }
 

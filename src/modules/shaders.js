@@ -1,5 +1,5 @@
 "use strict"
-const gpu = new GPU();
+
 module.exports = {
     ambientLight: function (color) {
         let cl = color;
