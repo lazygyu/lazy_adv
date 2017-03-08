@@ -193,7 +193,7 @@ class Player {
         }
         this.dir = 3;
       } else if (key.isPress(13) || key.btnPress(0)) {
-        console.log("do");
+        
         let tPos = this.front;
         map.do(this, tPos.x, tPos.y);
       }
