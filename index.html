@@ -78,7 +78,7 @@
           b *= topC.b;
         }
         
-        gl_FragColor = vec4(tmp.rgb + (texelColor.rgb * vec3(1.0-r, 1.0-g, 1.0-b)), texelColor.a);
+        gl_FragColor = vec4(max(tmp.rgb, (texelColor.rgb * vec3(r, g, b))), texelColor.a);
         }
       }
     </script>
