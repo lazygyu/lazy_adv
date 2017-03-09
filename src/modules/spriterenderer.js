@@ -29,7 +29,7 @@ class SpriteRenderer{
         this.canvas = document.createElement("canvas");
         this.canvas.width = width;
         this.canvas.height = height;
-        let gl = this.canvas.getContext("webgl");
+        let gl = this.canvas.getContext("webgl") || this.canvas.getContext("experimental-webgl");
         this.gl = gl;
 
         // webgl init

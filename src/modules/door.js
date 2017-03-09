@@ -14,6 +14,7 @@ class Door{
     this.openTimer = 0;
     this.locked = key || null;
     this.openSound = 'door';
+    this.title = "door";
   }
 
   update(delta) {

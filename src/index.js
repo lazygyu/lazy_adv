@@ -34,24 +34,20 @@ _key.on();
 let first = true;
 
 let player = new Player();
-let floor = new Floor(100,100, 'building', 20);
+let floor = null;
 let renderQueue = [];
+let floors = [new Floor(100, 100, 'building', 1), new Floor(100, 100, 'building', 2)];
+floor = floors[0];
+let currentFloor = 0;
 
 let last, cur;
-cur = performance.now()/1000;
+cur = performance.now() / 1000;
 
 function init() {
-  let w = 50, h = 50;
-  
 
-  player.tilePos = {x:50, y:50};
-  while(!floor.map[player.tilePos.y][player.tilePos.x].canMove){
-    player.tilePos.y--;
-    player.tilePos.x--;
-  }
-  player.realPos = {x:player.tilePos.x*conf.TILE_SIZE, y:player.tilePos.y*conf.TILE_SIZE};
-  if (first) render();
-  first = false;
+  player.tilePos = { x: floor.startPosition.x, y: floor.startPosition.y };
+  player.realPos = { x: player.tilePos.x * 32, y: player.tilePos.y * 32 };
+  render();
   toaster.add("Game Start!");
 }
 
@@ -62,18 +58,42 @@ function render() {
   cur = performance.now() / 1000;
   let delta = cur - last;
   let lbuf = buff2.getContext("2d");
-  
+
   player.update(delta, _key, floor);
   floor.update(delta, player);
   toaster.update(delta);
   _key.update();
-  if( _key.isPress(38)) console.log("press");
-  
+  while (floor.eventQueue.length > 0) {
+    let evt = floor.eventQueue.shift();
+    switch (evt.command) {
+      case "stair":
+        switch (evt.dir) {
+          case "up":
+            
+            if (currentFloor > 0) {
+              console.log("up!");
+              currentFloor--;
+              floor = floors[currentFloor];
+              player.setPos(floor.downPosition.x, floor.downPosition.y);
+            }
+            break;
+          case "down":
+            if (currentFloor < floors.length - 1) {
+              currentFloor++;
+              floor = floors[currentFloor];
+              player.setPos(floor.startPosition.x, floor.startPosition.y);
+            }
+            break;
+        }
+        break;
+    }
+  }
+
   ctx.save();
   ctx.fillStyle = "black";
   ctx.fillRect(0, 0, 270, 270);
   lbuf.clearRect(0, 0, 270, 270);
-  
+
   floor.render(ctx, player.realPos.x, player.realPos.y);
   floor.draw(ctx, 0);
   floor.draw(lbuf, 1);
@@ -85,40 +105,45 @@ function render() {
   ctx.drawImage(buff2, 0, 128, 96, 32, 0, 128, 96, 32);
   ctx.drawImage(buff2, 192, 128, 96, 32, 192, 128, 96, 32);
   ctx.drawImage(buff2, 0, 160, 270, 110, 0, 160, 270, 110);
-  ctx.globalAlpha = 0.8;
+  ctx.globalAlpha = 0.9;
   ctx.drawImage(buff2, 96, 128, 32, 32, 96, 128, 32, 32);
   ctx.drawImage(buff2, 160, 128, 32, 32, 160, 128, 32, 32);
-  ctx.globalAlpha = 0.5;
+  ctx.globalAlpha = 0.8;
   ctx.drawImage(buff2, 128, 128, 32, 32, 128, 128, 32, 32);
   ctx.restore();
-  
-  
-  
+
+
+
   let cctx = canv.getContext("2d");
   cctx.mozImageSmoothingEnabled = false;
   cctx.webkitImageSmoothingEnabled = false;
   cctx.msImageSmoothingEnabled = false;
   cctx.imageSmoothingEnabled = false;
-  cctx.drawImage(buff,0,0,540, 540);
-  
+  cctx.drawImage(buff, 0, 0, 540, 540);
+
   floor.map.forEach((row, y) => {
     row.forEach((t, x) => {
-      if (t.type === 1 || floor.shownmap[y][x] === 0 ) return true;
+      if (t.type === 1 || floor.shownmap[y][x] === 0) return true;
       if (floor.viewmap[y][x] === 0) {
-        cctx.fillStyle = t.spriteNo===14?'#633':'#555';
+        cctx.fillStyle = t.spriteNo === 14 ? '#633' : '#555';
       } else {
-        cctx.fillStyle = t.spriteNo===14?'#c99':'#aaa';
+        cctx.fillStyle = t.spriteNo === 14 ? '#c99' : '#aaa';
       }
-      cctx.fillRect(340 + x*2, y*2, 2, 2);
+      cctx.fillRect(340 + x * 2, y * 2, 2, 2);
     });
   });
-  
+  floor.mapObjects.forEach((o) => { 
+    if (!o.title || o.title !== "stair") return true;
+    cctx.fillStyle = "red";
+    cctx.fillRect(340 + (o.x * 2), o.y * 2, 2, 2);
+  });
+
   cctx.fillStyle = "red";
-  cctx.fillRect(340 + player.tilePos.x*2, player.tilePos.y*2, 2, 2);
-  
+  cctx.fillRect(340 + player.tilePos.x * 2, player.tilePos.y * 2, 2, 2);
+
   cctx.fillStyle = "white";
-  cctx.fillText((1 / delta) | 0 + "fps", 500, 20);
-  
+  cctx.fillText(Math.round(1 / delta) + "fps", 500, 20);
+
   toaster.render(cctx);
   requestAnimationFrame(render);
 

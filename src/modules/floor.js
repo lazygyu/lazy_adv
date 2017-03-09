@@ -22,7 +22,7 @@ class Floor {
     this.monsters = [];
     this.mapObjects = [];
     this.items = [];
-    this.ambient = Shaders.ambientLight({ r: Math.min(0.3+Math.random(), 1), g: Math.min(0.3+Math.random(),1), b: Math.min(Math.random()+0.3, 1), a: 1 });
+    this.ambient = Shaders.ambientLight({ r: Math.min(0.3+Math.random(), 0.8), g: Math.min(0.3+Math.random(),0.8), b: Math.min(Math.random()+0.3, 1), a: 1 });
     this.tileset = new Image();
     this.tileset.src = tileSets[type];
     this.layers = [];
@@ -36,13 +36,16 @@ class Floor {
       cv.width = 270;
       cv.height = 270;
     });
+    
 
     this.sheet = new SpriteSheet(this.tileset, 32, 32);
     this.map = util.initArray(width, height, null);
     this.mapTop = util.initArray(width, height, null);
     //this.createMap(width, height, this.lights);
-    let res = createDungeon(width, height, this.sheet, 50);
+    let res = createDungeon(width, height, this.sheet, 50, depth);
     this.map = res.map;
+    this.startPosition = res.startPosition;
+    this.downPosition = res.downPosition;
     this.lights.push.apply(this.lights, res.lights);
     this.mapObjects.push.apply(this.mapObjects, res.doors);
     for (let _x = 0; _x < this.width; _x++){
@@ -69,6 +72,7 @@ class Floor {
         } else if (_x > 0 && this.map[_y][_x].type == 1 && this.map[_y][_x - 1].type == 0) {
           if (_y > 0 && this.map[_y - 1][_x].type == 0) {
             this.mapTop[_y - 1][_x] = new Tile(1, false, false, 6);
+            //this.map[_y][_x].spriteNo = 16;
           } else {
             this.mapTop[_y - 1][_x] = new Tile(1, false, false, 16);
           }
@@ -86,8 +90,8 @@ class Floor {
     this.layers.push(this.map);
     this.viewmap = util.initArray(width, height, 0);
     this.shownmap = util.initArray(width, height, 0);
-    this.tileset.addEventListener("load", ()=>{ this.makeBuffer(); });
-    
+    this.tileset.addEventListener("load", () => { this.makeBuffer(); });
+    this.eventQueue = [];
   }
 
   canMove(x, y) {
@@ -138,6 +142,14 @@ class Floor {
 
   draw(ctx, layer) {
     ctx.drawImage(this.buffers[layer], 0, 0);
+  }
+
+  reach(player) {
+    this.mapObjects.forEach(i => { 
+      if (i.x == player.tilePos.x && i.y == player.tilePos.y && i.reach) {
+        this.eventQueue.push(i.reach(player));
+      }
+    });
   }
 
   do(player, x, y) {

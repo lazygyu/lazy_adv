@@ -1,4 +1,4 @@
-const util = require('./util.js'), Tile = require('./tile.js'), Door = require('./door.js');
+const util = require('./util.js'), Tile = require('./tile.js'), Door = require('./door.js'), Stair = require('./stair.js');
 
 const DIRECTION = {
   EAST: 2,
@@ -191,12 +191,30 @@ function isUnused(arr, x, y){
 
 let _object = 0;
 
-function createDungeon(width, height, sheet, inobj) {
+function createDungeon(width, height, sheet, inobj, depth) {
   _object = inobj < 1 ? 10 : inobj;
   let doors = [], lights = [];
   let arr = util.initArray(width, height, null);
+  let startDir = util.randomInt(0, 4);
   
-  makeRoom((width / 2) | 0, (height / 2) | 0, 8, 6, util.randomInt(0,4), arr);
+  makeRoom((width / 2) | 0, (height / 2) | 0, 8, 6, startDir, arr);
+
+  let startPosition = { x: (width / 2) | 0, y: (height / 2) | 0 };
+  let downPosition = { x: (width / 2) | 0, y: (height / 2) | 0 };
+  switch (startDir) {
+    case DIRECTION.NORTH:
+      startPosition.y--;  
+      break;  
+    case DIRECTION.EAST:
+      startPosition.x++;  
+      break;
+    case DIRECTION.SOUTH:
+      startPosition.y++;
+      break;
+    case DIRECTION.WEST:
+      startPosition.x--;  
+      break;
+  }
 
   let currentFeatures = 1;
   for (let countingTries = 0; countingTries < 1000; countingTries++) {
@@ -257,7 +275,7 @@ function createDungeon(width, height, sheet, inobj) {
           
           currentFeatures++;
           arr[newy][newx] = new Tile(0, true, true, 13);
-          arr[newy + ymod][newx + xmod] = new Tile(0, true, true, 13);
+          arr[newy + ymod][newx + xmod] = new Tile(0, true, true, 14);
 
           let tDoor = null;
           switch(validTile){
@@ -282,12 +300,28 @@ function createDungeon(width, height, sheet, inobj) {
       }
     }
   }
+   while (true) {
+      newx = util.randomInt(1, width - 1);
+      newy = util.randomInt(1, height - 1);
+      if (getCellProp(arr, 'type', newx, newy) === 0) {
+        doors.push(new Stair('down', sheet, newx, newy, 50, 50));
+        downPosition = { x: newx, y: newy };
+        break;
+      }
+   }
+   if (depth > 1) {
+     while (true) {
+       newx = util.randomInt(1, width - 1);
+       newy = util.randomInt(1, height - 1);
+       if (getCellProp(arr, 'type', newx, newy) === 0) {
+         doors.push(new Stair('up', sheet, newx, newy, 50, 50));
+         startPosition = { x: newx, y: newy };
+         break;
+       }
+     } 
+   }
   
-  
-  
-  
-  console.dir(lights);
-  return {map:arr, doors:doors, lights:lights};
+  return {map:arr, doors:doors, lights:lights, downPosition:downPosition, startPosition:startPosition};
 }
 
 module.exports = createDungeon;

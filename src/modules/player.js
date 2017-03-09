@@ -129,6 +129,11 @@ class Player {
     this.inventory = [];
   }
 
+  setPos(x, y) {
+    this.tilePos = { x: x, y: y };
+    this.realPos = { x: x * 32, y: y * 32 };
+  }
+
   have(itemType) {
     return !!(this.inventory.findIndex(i => i.type === itemType));
   }
@@ -215,7 +220,8 @@ class Player {
     }
     this.realPos.x = Math.round(this.realPos.x);
     this.realPos.y = Math.round(this.realPos.y);
-    if (this.realPos.x == tarX && this.realPos.y == tarY) {
+    if (this.realPos.x == tarX && this.realPos.y == tarY && this.state != "stand") {
+      map.reach(this);
       this.state = "stand";
     }
 
@@ -224,9 +230,9 @@ class Player {
   }
 
   mult(tar, c){
-    tar[0] *= c.r;
-    tar[1] *= c.g;
-    tar[2] *= c.b
+    tar[0] += c.r;
+    tar[1] += c.g;
+    tar[2] += c.b
   }
   /**
    * draw the player into a canvas

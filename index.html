@@ -27,6 +27,9 @@
   <body>
     <div id="container">
     </div>
+    <script id="shader-stage" type="x-shader/x-fragment">
+      
+    </script>
     <script id="shader-fs" type="x-shader/x-fragment">
     
       precision mediump float;
@@ -78,7 +81,7 @@
           b *= topC.b;
         }
         
-        gl_FragColor = vec4(max(tmp.rgb, (texelColor.rgb * vec3(r, g, b))), texelColor.a);
+        gl_FragColor = vec4(tmp.rgb * vec3(r, g, b), texelColor.a);
         }
       }
     </script>
