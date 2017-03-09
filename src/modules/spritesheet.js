@@ -5,10 +5,18 @@ class SpriteSheet{
     this.tileHeight = h;
     this.columns = this.img.width / w;
     this.rows = this.img.height / h;
+    this.canvas = document.createElement("canvas");
+    this.ctx = null;
     if( this.img.addEventListener )  this.img.addEventListener('load', () => { 
       this.columns = this.img.width / w;
       this.rows = this.img.height / h;
+      this.canvas.width = img.width;
+      this.canvas.height = img.height;
+      this.ctx = this.canvas.getContext("webgl");
+      
     });
+
+    
   }
 
   draw(ctx, x, y, col, row) {

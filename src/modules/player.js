@@ -2,7 +2,8 @@ const SpriteSheet = require('./spritesheet.js'),
   Animation = require('./animation.js'),
   conf = require('./conf.js'),
   util = require('./util.js'),
-  sound = require('./soundmanager.js');
+  sound = require('./soundmanager.js'),
+  Renderer = require('./spriterenderer.js');
 
 /**
  * Player class
@@ -112,7 +113,7 @@ class Player {
     this.ttx = this.tempBuff.getContext("2d");
 
 
-
+    this.renderer = new Renderer(32, 64);
 
     this.level = 1;
     this.str = 10;
@@ -221,6 +222,12 @@ class Player {
     this.animations[this.state][this.dir].update(delta);
     this.animations_light[this.state][this.dir].update(delta);
   }
+
+  mult(tar, c){
+    tar[0] *= c.r;
+    tar[1] *= c.g;
+    tar[2] *= c.b
+  }
   /**
    * draw the player into a canvas
    * @param {CanvasRenderingContext2D} ctx 
@@ -234,59 +241,68 @@ class Player {
     this.animations[this.state][this.dir].draw(this.btx, 0, 16);
     this.animations[this.state][this.dir].draw(this.ttx, 0, 16);
     this.animations_light[this.state][this.dir].draw(this.ltx, 0, 16);
-
+    let amb = lights && lights.find(l=>typeof l == 'function');
+    let top = [1, 1, 1], left = [1, 1, 1], right = [1, 1, 1], bottom = [1, 1, 1];
     if (lights && lights.length > 0) {
-      let origin = this.btx.getImageData(0, 0, 32, 64);
-      let light = this.ltx.getImageData(0, 0, 32, 64);
-      let tempBuff = this.ttx.getImageData(0, 0, 32, 64);
-      let dt = origin.data;
-      let lt = light.data;
-      let tt = tempBuff.data;
-      let lim = dt.length;
+      
+      lights = lights.filter(l => util.distance(this.realPos.x, this.realPos.y, l.x, l.y) < l.brightness);
+      
 
-
-      lights = lights.filter(l => typeof l == 'function' || util.distance(this.realPos.x, this.realPos.y, l.x, l.y) < l.brightness);
+      
       lights.forEach(l => {
-
-        if (typeof l == 'function') {
-          
-          l(this.ttx);
-          tempBuff = this.ttx.getImageData(0, 0, 32, 64);
-          tt = tempBuff.data;
-          
-        } else {
-
           let lx = l.x;
           let ly = l.y;
           let ang = Math.round(((Math.atan2(ly - this.realPos.y, lx - this.realPos.x) / Math.PI * 180 + 270) % 360) / 45) % 8;
           let mask = 0;
           let r = l.color.r, g = l.color.g, b = l.color.b, br = l.brightness;
           let t, mx = this.realPos.x, my = this.realPos.y, px, py;
+          let bright = util.distance(mx, my, lx, ly)/br;
+          let cl = {r:r*bright, g:g*bright, b:b*bright};
           switch (ang) {
-            case 0: mask = 4; break;
-            case 1: mask = 12; break;
-            case 2: mask = 8; break;
-            case 3: mask = 9; break;
-            case 4: mask = 1; break;
-            case 5: mask = 3; break;
-            case 6: mask = 2; break;
-            case 7: mask = 6; break;
+            case 0: 
+              mask = 4; 
+              this.mult(bottom, cl);
+            break;
+            case 1: 
+              mask = 12; 
+              this.mult(bottom, cl);
+              this.mult(left, cl);
+              break;
+            case 2: 
+              mask = 8; 
+              this.mult(left, cl);
+              break;
+            case 3:
+              mask = 9;
+              this.mult(top, cl);
+              this.mult(left, cl);
+              break;
+            case 4: 
+              mask = 1;
+              this.mult(top, cl);
+              break;
+            case 5:
+              mask = 3;
+              this.mult(top, cl);
+              this.mult(right, cl);
+              break;
+            case 6: 
+              mask = 2; 
+              this.mult(right, cl);
+              break;
+            case 7: 
+              mask = 6; 
+              this.mult(bottom, cl);
+              this.mult(right, cl);
+              break;
           }
-          for (let i = 0; i < lim; i += 4) {
-            if (!(lt[i] & mask) || (dt[i] === 0 && dt[i + 1] === 0 && dt[i + 2] === 0)) continue;
-            px = (i / 4) % 32;
-            py = (i / 4 / 32) | 0;
-            px += mx; py += my;
-            t = 1 - Math.sqrt(Math.pow(lx - px, 2) + Math.pow(ly - py, 2)) / br;
-            tt[i] = Math.max(tt[i] + dt[i] * r * t, tt[i]);
-            tt[i + 1] = Math.max(tt[i + 1] + dt[i] * g * t, tt[i + 1]);
-            tt[i + 2] = Math.max(tt[i + 2] + dt[i] * b * t, tt[i + 2]);
-          }
-        }
+          
       });
-      this.btx.putImageData(tempBuff, 0, 0);
+      
     }
-    ctx.drawImage(this.buff, this.realPos.x, this.realPos.y - 32);
+    
+    this.renderer.render(this.buff, this.lightBuff, amb, [top, left, bottom, right]);
+    ctx.drawImage(this.renderer.canvas, this.realPos.x, this.realPos.y - 32);
   }
 }
 

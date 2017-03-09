@@ -4,7 +4,7 @@ module.exports = {
     ambientLight: function (color) {
         let cl = color;
         let r = cl.r, g = cl.g, b = cl.b;
-        return function (ctx) {
+        let fnc =  function (ctx) {
             let origin = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
             let od = origin.data, l = origin.data.length;
             let i;
@@ -17,6 +17,8 @@ module.exports = {
             }
             ctx.putImageData(origin, 0, 0);
         }
+        fnc.color = cl;
+        return fnc;
     },
     spotLight: function (ctx, light) {
         let cl = light.color;
