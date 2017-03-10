@@ -12,8 +12,6 @@ class SpriteSheet{
       this.rows = this.img.height / h;
       this.canvas.width = img.width;
       this.canvas.height = img.height;
-      this.ctx = this.canvas.getContext("webgl");
-      
     });
 
     

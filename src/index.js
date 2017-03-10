@@ -9,6 +9,7 @@ const Input = require('./modules/input.js');
 const Floor = require('./modules/floor.js');
 const SoundManager = require('./modules/soundmanager.js');
 const toaster = require('./modules/toaster.js');
+const SpriteRenderer = require('./modules/spriterenderer.js');
 
 SoundManager.add("door", "./sounds/door.mp3");
 SoundManager.add("footstep1", "./sounds/footstep1.mp3");
@@ -36,7 +37,11 @@ let first = true;
 let player = new Player();
 let floor = null;
 let renderQueue = [];
-let floors = [new Floor(100, 100, 'building', 1), new Floor(100, 100, 'building', 2)];
+let floors = [];
+let mapRenderer = new SpriteRenderer(512, 512, ['shader-stage-fs', 'shader-stage-vs']);
+for (let i =1; i < 20; i++){
+  floors.push(new Floor(100, 100, 'building', i, {renderer:mapRenderer}));
+}
 floor = floors[0];
 let currentFloor = 0;
 

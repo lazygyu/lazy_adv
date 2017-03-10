@@ -262,7 +262,7 @@ class Player {
           let mask = 0;
           let r = l.color.r, g = l.color.g, b = l.color.b, br = l.brightness;
           let t, mx = this.realPos.x, my = this.realPos.y, px, py;
-          let bright = util.distance(mx, my, lx, ly)/br;
+          let bright = 1.0 - util.distance(mx, my, lx, ly)/br;
           let cl = {r:r*bright, g:g*bright, b:b*bright};
           switch (ang) {
             case 0: 

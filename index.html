@@ -115,30 +115,30 @@
         }else{
         if( mask >= 8 ){
           mask = mask - 8;
-          r = leftC.r;
-          g = leftC.g;
-          b = leftC.b;
+          r *= leftC.r;
+          g *= leftC.g;
+          b *= leftC.b;
         }
         if(mask >= 4){
           mask = mask - 4;
-          r = bottomC.r;
-          g = bottomC.g;
-          b = bottomC.b;
+          r *= bottomC.r;
+          g *= bottomC.g;
+          b *= bottomC.b;
         }
         if(mask >= 2){
           mask = mask - 2;
-          r = rightC.r;
-          g = rightC.g;
-          b = rightC.b;
+          r *= rightC.r;
+          g *= rightC.g;
+          b *= rightC.b;
         }
         if(mask >= 1){
           mask = mask - 1;
-          r = topC.r;
-          g = topC.g;
-          b = topC.b;
+          r *= topC.r;
+          g *= topC.g;
+          b *= topC.b;
         }
         
-        gl_FragColor = vec4(tmp.rgb * vec3(r, g, b), texelColor.a);
+        gl_FragColor = vec4( max(tmp.rgb, tmp.rgb * vec3(r, g, b)), texelColor.a);
         }
       }
     </script>

@@ -55,6 +55,7 @@
 	const Floor = __webpack_require__(13);
 	const SoundManager = __webpack_require__(7);
 	const toaster = __webpack_require__(12);
+	const SpriteRenderer = __webpack_require__(8);
 
 	SoundManager.add("door", "./sounds/door.mp3");
 	SoundManager.add("footstep1", "./sounds/footstep1.mp3");
@@ -82,7 +83,11 @@
 	let player = new Player();
 	let floor = null;
 	let renderQueue = [];
-	let floors = [new Floor(100, 100, 'building', 1), new Floor(100, 100, 'building', 2)];
+	let floors = [];
+	let mapRenderer = new SpriteRenderer(512, 512, ['shader-stage-fs', 'shader-stage-vs']);
+	for (let i =1; i < 20; i++){
+	  floors.push(new Floor(100, 100, 'building', i, {renderer:mapRenderer}));
+	}
 	floor = floors[0];
 	let currentFloor = 0;
 
@@ -215,8 +220,6 @@
 	      this.rows = this.img.height / h;
 	      this.canvas.width = img.width;
 	      this.canvas.height = img.height;
-	      this.ctx = this.canvas.getContext("webgl");
-	      
 	    });
 
 	    
@@ -559,7 +562,7 @@
 	          let mask = 0;
 	          let r = l.color.r, g = l.color.g, b = l.color.b, br = l.brightness;
 	          let t, mx = this.realPos.x, my = this.realPos.y, px, py;
-	          let bright = util.distance(mx, my, lx, ly)/br;
+	          let bright = 1.0 - util.distance(mx, my, lx, ly)/br;
 	          let cl = {r:r*bright, g:g*bright, b:b*bright};
 	          switch (ang) {
 	            case 0: 
@@ -1320,7 +1323,7 @@
 	};
 
 	class Floor {
-	  constructor(width, height, type, depth) {
+	  constructor(width, height, type, depth, opt) {
 	    this.depth = depth || 1;
 	    this.width = width;
 	    this.height = height;
@@ -1347,8 +1350,7 @@
 	      cv.height = 128;
 	    });
 
-	    this.renderer = new SpriteRenderer(128,128, ['shader-stage-fs', 'shader-stage-vs']);
-	    this.mapRenderer = new SpriteRenderer(512,512, ['shader-stage-fs', 'shader-stage-vs']);
+	    this.mapRenderer = opt.renderer || new SpriteRenderer(512,512, ['shader-stage-fs', 'shader-stage-vs']);
 	    
 	    this.sheet = new SpriteSheet(this.tileset, 32, 32);
 	    this.map = util.initArray(width, height, null);
@@ -1500,13 +1502,11 @@
 	        octx1.clearRect(0,0,octx1.canvas.width,octx1.canvas.height);
 	        octx2.clearRect(0,0,octx2.canvas.width,octx2.canvas.height);
 	        this.sheet.draw(octx1,0, 0, this.map[y][x].spriteNo);
-	        //this.renderer.render(this.objectBuffers[0], null, this.ambient, [], this.lights);
-	        //ctx1.drawImage(this.renderer.canvas, x*conf.TILE_SIZE-minx, y*conf.TILE_SIZE-miny);
+	        
 	        ctx1.drawImage(this.objectBuffers[0], x*conf.TILE_SIZE-minx, y*conf.TILE_SIZE-miny);
 	        if( this.mapTop[y][x] ){
 	          this.sheet.draw(octx2,0,0, this.mapTop[y][x].spriteNo);
-	          //this.renderer.render(this.objectBuffers[1], null, this.ambient, [], this.lights);
-	          //ctx2.drawImage(this.renderer.canvas, x*conf.TILE_SIZE-minx, y*conf.TILE_SIZE-miny);
+	          
 	          ctx2.drawImage(this.objectBuffers[1], x*conf.TILE_SIZE-minx, y*conf.TILE_SIZE-miny);
 	        }
 	      }

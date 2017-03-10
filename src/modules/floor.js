@@ -12,7 +12,7 @@ const tileSets = {
 };
 
 class Floor {
-  constructor(width, height, type, depth) {
+  constructor(width, height, type, depth, opt) {
     this.depth = depth || 1;
     this.width = width;
     this.height = height;
@@ -39,8 +39,7 @@ class Floor {
       cv.height = 128;
     });
 
-    this.renderer = new SpriteRenderer(128,128, ['shader-stage-fs', 'shader-stage-vs']);
-    this.mapRenderer = new SpriteRenderer(512,512, ['shader-stage-fs', 'shader-stage-vs']);
+    this.mapRenderer = opt.renderer || new SpriteRenderer(512,512, ['shader-stage-fs', 'shader-stage-vs']);
     
     this.sheet = new SpriteSheet(this.tileset, 32, 32);
     this.map = util.initArray(width, height, null);
@@ -192,13 +191,11 @@ class Floor {
         octx1.clearRect(0,0,octx1.canvas.width,octx1.canvas.height);
         octx2.clearRect(0,0,octx2.canvas.width,octx2.canvas.height);
         this.sheet.draw(octx1,0, 0, this.map[y][x].spriteNo);
-        //this.renderer.render(this.objectBuffers[0], null, this.ambient, [], this.lights);
-        //ctx1.drawImage(this.renderer.canvas, x*conf.TILE_SIZE-minx, y*conf.TILE_SIZE-miny);
+        
         ctx1.drawImage(this.objectBuffers[0], x*conf.TILE_SIZE-minx, y*conf.TILE_SIZE-miny);
         if( this.mapTop[y][x] ){
           this.sheet.draw(octx2,0,0, this.mapTop[y][x].spriteNo);
-          //this.renderer.render(this.objectBuffers[1], null, this.ambient, [], this.lights);
-          //ctx2.drawImage(this.renderer.canvas, x*conf.TILE_SIZE-minx, y*conf.TILE_SIZE-miny);
+          
           ctx2.drawImage(this.objectBuffers[1], x*conf.TILE_SIZE-minx, y*conf.TILE_SIZE-miny);
         }
       }
