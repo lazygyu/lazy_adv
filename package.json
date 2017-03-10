@@ -1,0 +1,26 @@
+{
+  "name": "lazy_adv",
+  "version": "1.0.0",
+  "description": "",
+  "main": "",
+  "dependencies": {
+    
+  },
+  "devDependencies": {
+    "babili-webpack-plugin": "^0.0.11",
+    "webpack": "^2.2.1"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lazygyu/lazy_adv.git"
+  },
+  "author": "lazygyu",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/lazygyu/lazy_adv/issues"
+  },
+  "homepage": "https://github.com/lazygyu/lazy_adv#readme"
+}
