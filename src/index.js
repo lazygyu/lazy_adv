@@ -134,7 +134,7 @@ function render() {
   });
   floor.mapObjects.forEach((o) => { 
     if (!o.title || o.title !== "stair") return true;
-    cctx.fillStyle = "red";
+    cctx.fillStyle = "#9cf";
     cctx.fillRect(340 + (o.x * 2), o.y * 2, 2, 2);
   });
 

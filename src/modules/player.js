@@ -113,7 +113,7 @@ class Player {
     this.ttx = this.tempBuff.getContext("2d");
 
 
-    this.renderer = new Renderer(32, 64);
+    this.renderer = new Renderer(32, 64, ['shader-fs', 'shader-vs']);
 
     this.level = 1;
     this.str = 10;

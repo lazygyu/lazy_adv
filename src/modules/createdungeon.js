@@ -77,7 +77,7 @@ function getRoomPoints(x, y, xlen, ylen, dir) {
 }
 
 function makeRoom(x, y, mx, my, dir, arr) {
-  let xlen = util.randomInt(4, mx), ylen = util.randomInt(4, my);
+  let xlen = util.randomInt(5, mx), ylen = util.randomInt(5, my);
   let points = getRoomPoints(x, y, xlen, ylen, dir);
 
   if (points.some(s => s.y < 0 || s.y >= arr.length || s.x < 0 || s.x >= arr[0].length || !isUnused(arr, s.x, s.y))) return false;
@@ -303,7 +303,7 @@ function createDungeon(width, height, sheet, inobj, depth) {
    while (true) {
       newx = util.randomInt(1, width - 1);
       newy = util.randomInt(1, height - 1);
-      if (getCellProp(arr, 'type', newx, newy) === 0) {
+      if (getCellProp(arr, 'spriteNo', newx, newy) === 14 && getCellProp(arr, 'type', newx, newy+1) !== 1 && !doors.some(d=>d.x === newx && d.y === newy) ) {
         doors.push(new Stair('down', sheet, newx, newy, 50, 50));
         downPosition = { x: newx, y: newy };
         break;
@@ -313,7 +313,7 @@ function createDungeon(width, height, sheet, inobj, depth) {
      while (true) {
        newx = util.randomInt(1, width - 1);
        newy = util.randomInt(1, height - 1);
-       if (getCellProp(arr, 'type', newx, newy) === 0) {
+       if (getCellProp(arr, 'spriteNo', newx, newy) === 14 && getCellProp(arr, 'type', newx, newy+1) !== 1 && !doors.some(d=>d.x === newx && d.y === newy)) {
          doors.push(new Stair('up', sheet, newx, newy, 50, 50));
          startPosition = { x: newx, y: newy };
          break;

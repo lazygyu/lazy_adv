@@ -25,7 +25,7 @@ function getShader(gl, id){
 
 
 class SpriteRenderer{
-    constructor(width, height){
+    constructor(width, height, shaderTypes){
         this.canvas = document.createElement("canvas");
         this.canvas.width = width;
         this.canvas.height = height;
@@ -35,13 +35,12 @@ class SpriteRenderer{
         // webgl init
         gl.viewport(0, 0, this.canvas.width, this.canvas.height);
         gl.enable(gl.DEPTH_TEST);
-        let fgShader = getShader(gl, "shader-fs");
-        let vtShader = getShader(gl, "shader-vs");
+        let shaders = shaderTypes.map(st=>getShader(gl, st));
+        
 
         let shaderProgram = gl.createProgram();
         this.shaderProgram = shaderProgram;
-        gl.attachShader(this.shaderProgram, fgShader);
-        gl.attachShader(this.shaderProgram, vtShader);
+        shaders.forEach(sd=>gl.attachShader(this.shaderProgram, sd));
         gl.linkProgram(this.shaderProgram);
         gl.useProgram(this.shaderProgram);
 
@@ -112,19 +111,16 @@ class SpriteRenderer{
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, src);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-        
         gl.bindTexture(gl.TEXTURE_2D, null);
     }
 
-    render(src, lightmap, ambient, lights){
+    render(src, lightmap, ambient, lights, lightSources){
         let gl = this.gl;
+        
         this.updateTexture(gl, src, this.o.texture);
-        this.updateTexture(gl, lightmap, this.o.lightTexture);
+        if( lightmap ) this.updateTexture(gl, lightmap, this.o.lightTexture);
         gl.viewport(0, 0, this.canvas.width, this.canvas.height);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-        //mat4.perspective(180,this.canvas.width / this.canvas.height, 0.1, 100.0, this.o.pMatrix);
-        //mat4.identity(this.o.mvMatrix);
-        //mat4.translate(this.o.mvMatrix,[0.0, 0.0, -0.1]);
         
         gl.bindBuffer(gl.ARRAY_BUFFER, this.o.vertexPositionBuffers);
         gl.vertexAttribPointer(this.shaderProgram.vertexPositionAttribute, this.o.vertexPositionBuffers.itemSize, gl.FLOAT, false, 0, 0);
@@ -135,22 +131,44 @@ class SpriteRenderer{
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, this.o.texture);
         gl.uniform1i(gl.getUniformLocation(this.shaderProgram, "uSampler"), 0);
+        
         gl.activeTexture(gl.TEXTURE1);
         gl.bindTexture(gl.TEXTURE_2D, this.o.lightTexture);
         gl.uniform1i(gl.getUniformLocation(this.shaderProgram, "normalMap"), 1);
+
+        gl.uniform3f(gl.getUniformLocation(this.shaderProgram, "aVertextNormal"), 0, 0, 1.0);
+        
         if( lights.length > 0 ) gl.uniform3f(gl.getUniformLocation(this.shaderProgram, "topC"), lights[0][0], lights[0][1], lights[0][2]);
         if( lights.length > 1 ) gl.uniform3f(gl.getUniformLocation(this.shaderProgram, "leftC"), lights[1][0], lights[1][1], lights[1][2]);
         if( lights.length > 2 ) gl.uniform3f(gl.getUniformLocation(this.shaderProgram, "bottomC"), lights[2][0], lights[2][1], lights[2][2]);
         if( lights.length > 3 ) gl.uniform3f(gl.getUniformLocation(this.shaderProgram, "rightC"), lights[3][0], lights[3][1], lights[3][2]);
         if( ambient ) gl.uniform3f(gl.getUniformLocation(this.shaderProgram, "ambientLight"), ambient.color.r, ambient.color.g, ambient.color.b);
         
+        if(lightSources){
+            let positions = [];
+            let colors = [];
+            lightSources.forEach(l=>{ positions.push(l.x, l.y); colors.push(l.color.r, l.color.g, l.color.b, l.brightness); });
+            if(positions.length > 0 ){
+                gl.uniform2fv(gl.getUniformLocation(this.shaderProgram, "lightPositions"), positions);
+                gl.uniform4fv(gl.getUniformLocation(this.shaderProgram, "lightColors"), colors);
+            }
+        }
 
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.o.indexBuffer);
         
         gl.uniformMatrix4fv(this.shaderProgram.pMatrixUniform, false, this.o.pMatrix);
         gl.uniformMatrix4fv(this.shaderProgram.mvMatrixUniform, false, this.o.mvMatrix);
+        let normalMatrix = mat3.create();
+
+        mat4.toInverseMat3(this.o.mvMatrix, normalMatrix);
+        mat3.transpose(normalMatrix);
+        
+
+        gl.uniformMatrix3fv(gl.getUniformLocation(this.shaderProgram, "uNMatrix"), false, normalMatrix);
+        gl.useProgram(this.shaderProgram);
         gl.drawElements(gl.TRIANGLES, this.o.indexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
-        //gl.drawArrays(gl.TRIANGLE_STRIP, 0, this.o.vertexPositionBuffers.numItems);
+        
+        gl.deleteProgram(this.shaderProgram);
     }
 }
 
