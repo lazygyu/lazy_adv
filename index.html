@@ -35,25 +35,27 @@
       varying vec4 vPosition;
       varying vec3 vTransformedNormal;
 
-      uniform vec2 lightPositions[20];
-      uniform vec4 lightColors[20];
+      uniform vec2 lightPositions[30];
+      uniform vec4 lightColors[30];
 
       uniform sampler2D uSampler;
       
       void main(void) {
         mediump vec4 texelColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));
         mediump vec4 tmp = vec4(texelColor.rgb * vLighting, texelColor.a);
-        vec3 light = vec3(0.0, 0.0, 0.0);
+        
+        vec3 light;
         for(int i=0;i<20;i++){
-          //vec3 lightDirection = normalize(vec3(lightPositions[i], -1.0) - vPosition.xyz);
-          //float weighting = max(dot(normalize(vTransformedNormal), lightDirection), 0.0);
-          float dist = length(lightPositions[i] - vTextureCoord.xy);
-          dist = dist / lightColors[i].a;
-          light = light + max(lightColors[i].rgb*dist, 0.0);
+          vec3 lightDirection = normalize(vec3(lightPositions[i], 0.01) - vec3(vTextureCoord.xy, 0));
+          float dist = distance(lightPositions[i] , vTextureCoord.xy);
+          if( dist > lightColors[i].a/20.0 ) continue;
+          float bright = dist / (lightColors[i].a/20.0);
+          //float weight = max( dot( normalize(vTransformedNormal), lightDirection) , 0.0 ) * bright;
+          float weight = 1.0 - bright;
+          light +=  weight * lightColors[i].rgb;
         }
 
-        tmp = vec4(min(1.0, tmp.r + light.r), min(1.0, tmp.g + light.g), min(1.0, tmp.b+light.b), tmp.a);
-        gl_FragColor = tmp;
+        gl_FragColor = vec4(tmp.rgb + light * texelColor.rgb, tmp.a);
         
       }
     </script>
@@ -75,14 +77,14 @@
 
       void main(void) {
         
-        gl_Position = vec4(aVertexPosition, 1.0);
-        vPosition = uMVMatrix * vec4(aVertexPosition, 1.0);
+        gl_Position =  vec4(aVertexPosition, 1.0);
+        vPosition = vec4(aVertexPosition, 1.0);
         vTextureCoord = aTextureCoord;
         
         // Apply lighting effect
 
         vLighting = ambientLight;
-        vTransformedNormal = uNormalMatrix * aVertexNormal;
+        vTransformedNormal =  aVertexNormal;
       }
     </script>
     <script id="shader-fs" type="x-shader/x-fragment">
@@ -113,27 +115,27 @@
         }else{
         if( mask >= 8 ){
           mask = mask - 8;
-          r *= leftC.r;
-          g *= leftC.g;
-          b *= leftC.b;
+          r = leftC.r;
+          g = leftC.g;
+          b = leftC.b;
         }
         if(mask >= 4){
           mask = mask - 4;
-          r *= bottomC.r;
-          g *= bottomC.g;
-          b *= bottomC.b;
+          r = bottomC.r;
+          g = bottomC.g;
+          b = bottomC.b;
         }
         if(mask >= 2){
           mask = mask - 2;
-          r *= rightC.r;
-          g *= rightC.g;
-          b *= rightC.b;
+          r = rightC.r;
+          g = rightC.g;
+          b = rightC.b;
         }
         if(mask >= 1){
           mask = mask - 1;
-          r *= topC.r;
-          g *= topC.g;
-          b *= topC.b;
+          r = topC.r;
+          g = topC.g;
+          b = topC.b;
         }
         
         gl_FragColor = vec4(tmp.rgb * vec3(r, g, b), texelColor.a);

@@ -47,11 +47,16 @@ class SpriteRenderer{
         shaderProgram.vertexPositionAttribute = gl.getAttribLocation(shaderProgram, "aVertexPosition");
         gl.enableVertexAttribArray(shaderProgram.vertexPositionAttribute);
 
+        
+
         shaderProgram.textureCoordAttribute = gl.getAttribLocation(shaderProgram, "aTextureCoord");
         gl.enableVertexAttribArray(shaderProgram.textureCoordAttribute);
+        shaderProgram.vertexNormalAttribute = gl.getAttribLocation(shaderProgram, "aVertexNormal");
+        if( shaderProgram.vertexNormalAttribute >= 0 ) gl.enableVertexAttribArray(shaderProgram.vertexNormalAttribute);
 
         shaderProgram.pMatrixUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
         shaderProgram.mvMatrixUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
+        shaderProgram.mNormalUniform = gl.getUniformLocation(shaderProgram, "uNormalMatrix");
         shaderProgram.samplerUniform = gl.getUniformLocation(shaderProgram, "uSampler");
 
         let mvMatrix = mat4.create();
@@ -70,6 +75,19 @@ class SpriteRenderer{
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
         vertexPositionBuffers.itemSize = 3;
         vertexPositionBuffers.numItems = 4;
+
+        
+        let vertexNormalBuffers = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, vertexNormalBuffers);
+        let normals = [
+            0.0, 0.0, 1.0,
+            0.0, 0.0, 1.0,
+            0.0, 0.0, 1.0,
+            0.0, 0.0, 1.0
+        ];
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals), gl.STATIC_DRAW);
+        vertexNormalBuffers.itemSize = 3;
+        vertexNormalBuffers.numItems = 4;
 
         let coordBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, coordBuffer);
@@ -97,7 +115,8 @@ class SpriteRenderer{
         this.o = {
             texture:texture,
             lightTexture:lightTexture,
-            vertexPositionBuffers:vertexPositionBuffers,
+            vertexPositionBuffers: vertexPositionBuffers,
+            vertexNormalBuffers: vertexNormalBuffers,
             mvMatrix:mvMatrix,
             pMatrix:pMatrix,
             coordBuffer:coordBuffer,
@@ -127,6 +146,11 @@ class SpriteRenderer{
 
         gl.bindBuffer(gl.ARRAY_BUFFER, this.o.coordBuffer);
         gl.vertexAttribPointer(this.shaderProgram.textureCoordAttribute, this.o.coordBuffer.itemSize, gl.FLOAT, false, 0, 0);
+
+        if (this.shaderProgram.vertexNormalAttribute >= 0) {
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.o.vertexNormalBuffers);
+            gl.vertexAttribPointer(this.shaderProgram.vertexNormalAttribute, this.o.vertexNormalBuffers.itemSize, gl.FLOAT, false, 0, 0);
+        }    
  
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, this.o.texture);
@@ -136,7 +160,8 @@ class SpriteRenderer{
         gl.bindTexture(gl.TEXTURE_2D, this.o.lightTexture);
         gl.uniform1i(gl.getUniformLocation(this.shaderProgram, "normalMap"), 1);
 
-        gl.uniform3f(gl.getUniformLocation(this.shaderProgram, "aVertextNormal"), 0, 0, 1.0);
+        //gl.uniform3f(gl.getUniformLocation(this.shaderProgram, "aVertexNormal"), 0, 0, 1.0);
+
         
         if( lights.length > 0 ) gl.uniform3f(gl.getUniformLocation(this.shaderProgram, "topC"), lights[0][0], lights[0][1], lights[0][2]);
         if( lights.length > 1 ) gl.uniform3f(gl.getUniformLocation(this.shaderProgram, "leftC"), lights[1][0], lights[1][1], lights[1][2]);
@@ -159,12 +184,13 @@ class SpriteRenderer{
         gl.uniformMatrix4fv(this.shaderProgram.pMatrixUniform, false, this.o.pMatrix);
         gl.uniformMatrix4fv(this.shaderProgram.mvMatrixUniform, false, this.o.mvMatrix);
         let normalMatrix = mat3.create();
+        mat4.toInverseMat3(this.o.mvMatrix, normalMatrix);
 
         mat4.toInverseMat3(this.o.mvMatrix, normalMatrix);
         mat3.transpose(normalMatrix);
         
 
-        gl.uniformMatrix3fv(gl.getUniformLocation(this.shaderProgram, "uNMatrix"), false, normalMatrix);
+        gl.uniformMatrix3fv(this.shaderProgram.mNormalUniform, false, normalMatrix);
         gl.useProgram(this.shaderProgram);
         gl.drawElements(gl.TRIANGLES, this.o.indexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
         

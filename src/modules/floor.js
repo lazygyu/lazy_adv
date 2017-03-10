@@ -203,26 +203,33 @@ class Floor {
         }
       }
     }
-    let lights = this.lights.filter(l=> l.x > minx && l.x < minx+270 && l.y > miny).map(l=>{ return {x:(l.x-minx) /(this.width*conf.TILE_SIZE), y:(l.y-miny)/(this.height*conf.TILE_SIZE), color:l.color, brightness:l.brightness/conf.TILE_SIZE }; });
+
+    let fh = this.height * conf.TILE_SIZE;
     
-    this.mapRenderer.render(this.buffers[0], null, this.ambient, [], lights);
+    let lights = this.lights
+      //.filter(l => l.x > minx && l.x < maxx && l.y > miny)
+      .map(l => {
+        return {
+          x: (l.x - minx) / 512,
+          y: 1.0 - (l.y - miny) / 512,
+          color: l.color,
+          brightness: l.brightness / conf.TILE_SIZE
+        };
+      });
+      //.filter(l => l.x <= 1.0 && l.y <= 1.0);
     
-    ctx1.drawImage(this.mapRenderer.canvas, 0, 0);
+    
 
     
     
     this.mapObjects.forEach((o) => { 
       if (this.shownmap[o.y][o.x] === 0) return true;
-      octx1.clearRect(0,0,octx1.canvas.width,octx1.canvas.height);
-      octx2.clearRect(0,0,octx2.canvas.width,octx2.canvas.height);
-      lights = this.lights.filter(l=> l.x > minx && l.x < minx+270 && l.y > miny).map(l=>{ return {x:(l.x-minx) /(this.width*conf.TILE_SIZE), y:(l.y-miny)/(this.height*conf.TILE_SIZE), color:l.color, brightness:l.brightness/conf.TILE_SIZE }; });
-
-      o.render(octx1, octx2, o.x*conf.TILE_SIZE - conf.TILE_SIZE, o.y*conf.TILE_SIZE - conf.TILE_SIZE);
-      this.renderer.render(this.objectBuffers[0], null, this.ambient, [], lights);
-      ctx1.drawImage(this.renderer.canvas, o.x*32-minx-conf.TILE_SIZE, o.y*32-miny-conf.TILE_SIZE);
-      this.renderer.render(this.objectBuffers[1], null, this.ambient, [], lights);
-      ctx2.drawImage(this.renderer.canvas, o.x*32-minx-conf.TILE_SIZE, o.y*32-miny-conf.TILE_SIZE);
+      o.render(ctx1, ctx2, minx, miny);
     });
+    this.mapRenderer.render(this.buffers[0], null, this.ambient, [], lights);
+    ctx1.drawImage(this.mapRenderer.canvas, 0, 0);
+    this.mapRenderer.render(this.buffers[1], null, this.ambient, [], []);
+    ctx2.drawImage(this.mapRenderer.canvas, 0, 0);
 
     ctx1.fillStyle = "black";
     ctx2.fillStyle = "black";
@@ -239,7 +246,7 @@ class Floor {
     }
     
   }
-
+  
 
 }
 
