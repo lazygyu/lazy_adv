@@ -28,6 +28,12 @@ class Floor {
     this.tileset = new Image();
     this.tileset.src = tileSets[type];
     this.layers = [];
+
+    this.rendered = [document.createElement("canvas"), document.createElement("canvas")];
+    this.rendered.forEach(cv=>{
+      cv.width = this.width * conf.TILE_SIZE;
+      cv.height = this.height * conf.TILE_SIZE;
+    });
     
     this.buffers = [document.createElement("canvas"), document.createElement("canvas")];
     this.buffers.forEach(cv=>{
@@ -168,8 +174,16 @@ class Floor {
     });
   }
 
-  makeBuffer(){
-    
+  makeBuffer() {
+    console.log("Create buffer for floor " + this.depth);
+    let ctx1 = this.rendered[0].getContext("2d");
+    let ctx2 = this.rendered[1].getContext("2d");
+    for (let x = 0; x < this.width; x++){
+      for (let y = 0; y < this.height; y++){
+        if (this.map[y][x]) this.sheet.draw(ctx1, x * conf.TILE_SIZE, y * conf.TILE_SIZE, this.map[y][x].spriteNo);
+        if (this.mapTop[y][x]) this.sheet.draw(ctx2, x * conf.TILE_SIZE, y * conf.TILE_SIZE, this.mapTop[y][x].spriteNo);
+      }
+    }
   }
 
   render(ctx, sx, sy) {
@@ -185,27 +199,12 @@ class Floor {
     let octx1 = this.objectBuffers[0].getContext("2d");
     let octx2 = this.objectBuffers[1].getContext("2d");
 
-    for(x=ix;x<ix+10;x++){
-      if( x < 0 || x > this.width ) continue;
-      for(y=iy;y<iy+10;y++){
-        if( y < 0 || y > this.width ) continue;
-        octx1.clearRect(0,0,octx1.canvas.width,octx1.canvas.height);
-        octx2.clearRect(0,0,octx2.canvas.width,octx2.canvas.height);
-        this.sheet.draw(octx1,0, 0, this.map[y][x].spriteNo);
-        
-        ctx1.drawImage(this.objectBuffers[0], x*conf.TILE_SIZE-minx, y*conf.TILE_SIZE-miny);
-        if( this.mapTop[y][x] ){
-          this.sheet.draw(octx2,0,0, this.mapTop[y][x].spriteNo);
-          
-          ctx2.drawImage(this.objectBuffers[1], x*conf.TILE_SIZE-minx, y*conf.TILE_SIZE-miny);
-        }
-      }
-    }
-
+    ctx1.drawImage(this.rendered[0], minx, miny, ctx1.canvas.width, ctx1.canvas.height, 0, 0, ctx1.canvas.width, ctx1.canvas.height);    
+    ctx2.drawImage(this.rendered[1], minx, miny, ctx2.canvas.width, ctx2.canvas.height, 0, 0, ctx2.canvas.width, ctx2.canvas.height);
     let fh = this.height * conf.TILE_SIZE;
     
     let lights = this.lights
-      //.filter(l => l.x > minx && l.x < maxx && l.y > miny)
+      .filter(l => (l.x + l.brightness > minx || l.x - l.brightness < maxx) && (l.y + l.brightness > miny || l.y - l.brightness < maxx))
       .map(l => {
         return {
           x: (l.x - minx) / 512,
@@ -226,7 +225,7 @@ class Floor {
     });
     this.mapRenderer.render(this.buffers[0], null, this.ambient, [], lights);
     ctx1.drawImage(this.mapRenderer.canvas, 0, 0);
-    this.mapRenderer.render(this.buffers[1], null, this.ambient, [], []);
+    this.mapRenderer.render(this.buffers[1], null, this.ambient, [], lights);
     ctx2.drawImage(this.mapRenderer.canvas, 0, 0);
 
     ctx1.fillStyle = "black";

@@ -46,11 +46,11 @@
         
         vec3 light;
         for(int i=0;i<20;i++){
-          vec3 lightDirection = normalize(vec3(lightPositions[i], 0.01) - vec3(vTextureCoord.xy, 0));
+          
           float dist = distance(lightPositions[i] , vTextureCoord.xy);
           if( dist > lightColors[i].a/20.0 ) continue;
           float bright = dist / (lightColors[i].a/20.0);
-          //float weight = max( dot( normalize(vTransformedNormal), lightDirection) , 0.0 ) * bright;
+          
           float weight = 1.0 - bright;
           light +=  weight * lightColors[i].rgb;
         }
