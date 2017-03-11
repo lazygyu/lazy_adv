@@ -40,7 +40,7 @@ let renderQueue = [];
 let floors = [];
 let mapRenderer = new SpriteRenderer(512, 512, ['shader-stage-fs', 'shader-stage-vs']);
 for (let i =1; i < 20; i++){
-  floors.push(new Floor(100, 100, 'building', i, {renderer:mapRenderer}));
+  floors.push(new Floor(100, 100, Math.random()<0.5?'building':'ice', i, {renderer:mapRenderer}));
 }
 floor = floors[0];
 let currentFloor = 0;
@@ -52,6 +52,8 @@ function init() {
 
   player.tilePos = { x: floor.startPosition.x, y: floor.startPosition.y };
   player.realPos = { x: player.tilePos.x * 32, y: player.tilePos.y * 32 };
+  player.msg = "여긴 어디지?";
+  player.msgTime = 3;
   render();
   toaster.add("Game Start!");
 }
@@ -148,6 +150,8 @@ function render() {
 
   cctx.fillStyle = "white";
   cctx.fillText(Math.round(1 / delta) + "fps", 500, 20);
+
+  cctx.fillText("지하 " + floor.depth + "층", 5, 530);
 
   toaster.render(cctx);
   requestAnimationFrame(render);

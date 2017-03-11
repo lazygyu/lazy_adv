@@ -3,7 +3,17 @@ class Logger{
     this.messages = [];
   }
 
-  
+  push(msg, type) {
+    if (type == null) {
+      type = "log";
+    }
+
+    this.messages.push({ msg: msg, type: type });
+  }
+
+  render(ctx) {
+    
+  }
 }
 
 Logger.instance = null;

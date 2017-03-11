@@ -8,7 +8,8 @@ const Door = require('./door.js');
 const createDungeon = require('./createdungeon.js');
 const SpriteRenderer = require('./spriterenderer.js');
 const tileSets = {
-  building: 'images/tileset.png'
+  building: 'images/tileset.png',
+  ice:'images/icecave.png'
 };
 
 class Floor {

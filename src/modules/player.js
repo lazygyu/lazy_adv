@@ -127,6 +127,9 @@ class Player {
     this.hungry = 0;
 
     this.inventory = [];
+
+    this.msg = null;
+    this.msgTime = 0;
   }
 
   setPos(x, y) {
@@ -227,6 +230,13 @@ class Player {
 
     this.animations[this.state][this.dir].update(delta);
     this.animations_light[this.state][this.dir].update(delta);
+
+    if (this.msgTime > 0) {
+      this.msgTime -= delta;
+    }
+    if (this.msgTime < 0) {
+      this.msgTime = 0;
+    }
   }
 
   mult(tar, c){
@@ -309,6 +319,25 @@ class Player {
     
     this.renderer.render(this.buff, this.lightBuff, amb, [top, left, bottom, right]);
     ctx.drawImage(this.renderer.canvas, this.realPos.x, this.realPos.y - 32);
+    if (this.msgTime > 0) {
+      let msgWidth = ctx.measureText(this.msg).width + 10;
+      ctx.fillStyle = "rgba(0, 0, 0, 0.9)";
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
+      ctx.beginPath();
+      ctx.moveTo(this.realPos.x + 16 - msgWidth / 2, this.realPos.y - 48);
+      ctx.lineTo(this.realPos.x + 16 + msgWidth/2, this.realPos.y - 48);
+      ctx.lineTo(this.realPos.x + 16 + msgWidth/2, this.realPos.y - 28);
+      ctx.lineTo(this.realPos.x + 24, this.realPos.y - 28);
+      ctx.lineTo(this.realPos.x + 16, this.realPos.y - 20);
+      ctx.lineTo(this.realPos.x + 8, this.realPos.y - 28);
+      ctx.lineTo(this.realPos.x + 16 - msgWidth / 2, this.realPos.y - 28);
+      ctx.lineTo(this.realPos.x + 16 - msgWidth / 2, this.realPos.y - 48);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "white";
+      ctx.fillText(this.msg, this.realPos.x + 21 - msgWidth / 2, this.realPos.y - 34);
+      
+    }
   }
 }
 
